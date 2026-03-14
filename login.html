@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — ClauseGuard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0d1b2a;
+    --navy-mid: #132236;
+    --navy-light: #1c3150;
+    --cream: #f5f0e8;
+    --gold: #c9a84c;
+    --gold-light: #e8c96a;
+    --text-muted: rgba(245,240,232,0.55);
+    --border: rgba(201,168,76,0.2);
+    --border-bright: rgba(201,168,76,0.4);
+    --red: #f87171;
+    --green: #4ade80;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--cream);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem; font-weight: 700;
+    color: var(--cream); letter-spacing: 0.02em;
+    text-decoration: none;
+    margin-bottom: 2rem;
+    position: relative;
+  }
+  .logo span { color: var(--gold); }
+
+  .card {
+    width: 100%; max-width: 420px;
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2.5rem;
+    position: relative;
+  }
+
+  /* Tab switcher */
+  .tabs {
+    display: flex;
+    background: var(--navy);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px;
+    margin-bottom: 2rem;
+  }
+  .tab {
+    flex: 1; text-align: center;
+    padding: 0.6rem;
+    font-size: 0.875rem; font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-muted);
+    user-select: none;
+  }
+  .tab.active {
+    background: var(--navy-mid);
+    color: var(--cream);
+    border: 1px solid var(--border);
+  }
+
+  .form-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem; font-weight: 700;
+    color: var(--cream);
+    margin-bottom: 0.4rem;
+  }
+  .form-sub {
+    font-size: 0.85rem; color: var(--text-muted);
+    margin-bottom: 1.75rem;
+  }
+
+  .field { margin-bottom: 1.1rem; }
+  label {
+    display: block;
+    font-size: 0.78rem; font-weight: 500;
+    color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.07em; margin-bottom: 0.4rem;
+  }
+  input[type="email"], input[type="password"] {
+    width: 100%; padding: 0.75rem 1rem;
+    background: var(--navy); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--cream);
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+    outline: none; transition: border-color 0.2s;
+  }
+  input[type="email"]:focus, input[type="password"]:focus {
+    border-color: var(--gold);
+  }
+  input::placeholder { color: var(--text-muted); }
+
+  .submit-btn {
+    width: 100%; padding: 0.9rem;
+    background: var(--gold); color: var(--navy);
+    border: none; border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem; font-weight: 500;
+    cursor: pointer; margin-top: 0.5rem;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  }
+  .submit-btn:hover:not(:disabled) { background: var(--gold-light); transform: translateY(-1px); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .spinner-sm {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(13,27,42,0.3);
+    border-top-color: var(--navy);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  .submit-btn.loading .spinner-sm { display: block; }
+  .submit-btn.loading .btn-label { opacity: 0.7; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .alert {
+    display: none;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    margin-top: 1rem;
+    line-height: 1.5;
+  }
+  .alert.error {
+    background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.3);
+    color: var(--red);
+  }
+  .alert.success {
+    background: rgba(74,222,128,0.1);
+    border: 1px solid rgba(74,222,128,0.3);
+    color: var(--green);
+  }
+  .alert.visible { display: block; }
+
+  .divider {
+    display: flex; align-items: center; gap: 0.75rem;
+    color: var(--text-muted); font-size: 0.78rem;
+    margin: 1.25rem 0;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .footer-note {
+    text-align: center;
+    font-size: 0.78rem; color: var(--text-muted);
+    margin-top: 1.5rem;
+  }
+  .footer-note a { color: var(--gold); text-decoration: none; }
+  .footer-note a:hover { text-decoration: underline; }
+
+  .back-link {
+    display: block; text-align: center;
+    font-size: 0.82rem; color: var(--text-muted);
+    text-decoration: none; margin-top: 1.5rem;
+    transition: color 0.2s; position: relative;
+  }
+  .back-link:hover { color: var(--gold); }
+</style>
+</head>
+<body>
+
+<a href="/" class="logo">Clause<span>Guard</span></a>
+
+<div class="card">
+  <div class="tabs">
+    <div class="tab active" id="tabSignin" onclick="switchTab('signin')">Sign in</div>
+    <div class="tab" id="tabSignup" onclick="switchTab('signup')">Create account</div>
+  </div>
+
+  <!-- SIGN IN -->
+  <div id="signinForm">
+    <div class="form-title">Welcome back</div>
+    <div class="form-sub">Sign in to your ClauseGuard account.</div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="signinEmail" placeholder="you@example.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="signinPassword" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="submit-btn" id="signinBtn" onclick="handleSignin()">
+      <div class="spinner-sm"></div>
+      <span class="btn-label">Sign in →</span>
+    </button>
+    <div class="alert" id="signinAlert"></div>
+  </div>
+
+  <!-- SIGN UP -->
+  <div id="signupForm" style="display:none;">
+    <div class="form-title">Create account</div>
+    <div class="form-sub">Start with 3 free analyses. No credit card required.</div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="signupEmail" placeholder="you@example.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="signupPassword" placeholder="At least 8 characters" autocomplete="new-password">
+    </div>
+    <button class="submit-btn" id="signupBtn" onclick="handleSignup()">
+      <div class="spinner-sm"></div>
+      <span class="btn-label">Create account →</span>
+    </button>
+    <div class="alert" id="signupAlert"></div>
+  </div>
+</div>
+
+<a href="/" class="back-link">← Back to clauseguard.io</a>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  let sb = null;
+
+  async function initSupabase() {
+    const cfg = await fetch('/api/config').then(r => r.json());
+    sb = supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+
+    // Already logged in? → /app
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) window.location.replace('/app');
+  }
+
+  initSupabase();
+
+  // ── Tab switcher ──────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    const isSignin = tab === 'signin';
+    document.getElementById('tabSignin').classList.toggle('active', isSignin);
+    document.getElementById('tabSignup').classList.toggle('active', !isSignin);
+    document.getElementById('signinForm').style.display = isSignin ? '' : 'none';
+    document.getElementById('signupForm').style.display = isSignin ? 'none' : '';
+  }
+
+  // ── Keyboard submit ───────────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const signinVisible = document.getElementById('signinForm').style.display !== 'none';
+    if (signinVisible) handleSignin();
+    else handleSignup();
+  });
+
+  // ── Sign in ───────────────────────────────────────────────────────────────
+  async function handleSignin() {
+    if (!sb) return;
+    const email = document.getElementById('signinEmail').value.trim();
+    const password = document.getElementById('signinPassword').value;
+    const btn = document.getElementById('signinBtn');
+    const alert = document.getElementById('signinAlert');
+
+    if (!email || !password) return showAlert(alert, 'error', 'Please enter your email and password.');
+
+    setLoading(btn, true);
+    clearAlert(alert);
+
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      setLoading(btn, false);
+      showAlert(alert, 'error', error.message);
+    } else {
+      window.location.replace('/app');
+    }
+  }
+
+  // ── Sign up ───────────────────────────────────────────────────────────────
+  async function handleSignup() {
+    if (!sb) return;
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const btn = document.getElementById('signupBtn');
+    const alert = document.getElementById('signupAlert');
+
+    if (!email || !password) return showAlert(alert, 'error', 'Please enter your email and password.');
+    if (password.length < 8) return showAlert(alert, 'error', 'Password must be at least 8 characters.');
+
+    setLoading(btn, true);
+    clearAlert(alert);
+
+    const { error } = await sb.auth.signUp({ email, password });
+
+    setLoading(btn, false);
+
+    if (error) {
+      showAlert(alert, 'error', error.message);
+    } else {
+      showAlert(alert, 'success', 'Account created! Check your email to confirm, then sign in.');
+      switchTab('signin');
+      document.getElementById('signinEmail').value = email;
+    }
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function setLoading(btn, loading) {
+    btn.disabled = loading;
+    btn.classList.toggle('loading', loading);
+  }
+
+  function showAlert(el, type, msg) {
+    el.className = `alert ${type} visible`;
+    el.textContent = msg;
+  }
+
+  function clearAlert(el) {
+    el.className = 'alert';
+    el.textContent = '';
+  }
+</script>
+</body>
+</html>

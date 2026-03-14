@@ -30,6 +30,11 @@
   .nav-logo span { color: var(--gold); }
   .nav-back { font-size: 0.82rem; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
   .nav-back:hover { color: var(--gold); }
+  .nav-user { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; }
+  .nav-email { color: var(--text-muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nav-sep { color: var(--border); }
+  .nav-signout { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.82rem; font-family: 'DM Sans', sans-serif; padding: 0; transition: color 0.2s; }
+  .nav-signout:hover { color: var(--gold); }
 
   /* MAIN LAYOUT */
   .container { max-width: 860px; margin: 0 auto; padding: 3rem 2rem 6rem; }
@@ -211,7 +216,12 @@
 
 <nav>
   <a href="/" class="nav-logo">Clause<span>Guard</span></a>
-  <a href="/" class="nav-back">← Back to home</a>
+  <div class="nav-user" id="navUser" style="display:none;">
+    <span class="nav-email" id="navEmail"></span>
+    <span class="nav-sep">·</span>
+    <button class="nav-signout" onclick="handleSignOut()">Sign out</button>
+  </div>
+  <a href="/" class="nav-back" id="navBack">← Back to home</a>
 </nav>
 
 <div class="container">
@@ -305,15 +315,54 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   // PDF.js setup
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+  let sb = null;
+  let currentSession = null;
   let currentFile = null;
   let currentFilename = 'Pasted text';
   let lastResult = null;
 
-  // Drag and drop
+  // ── Auth gate ─────────────────────────────────────────────────────────────
+  async function initAuth() {
+    const cfg = await fetch('/api/config').then(r => r.json());
+    sb = supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      window.location.replace('/login');
+      return;
+    }
+
+    currentSession = session;
+
+    // Show user info in nav
+    const email = session.user.email;
+    document.getElementById('navEmail').textContent = email.length > 24 ? email.slice(0, 22) + '…' : email;
+    document.getElementById('navUser').style.display = 'flex';
+    document.getElementById('navBack').style.display = 'none';
+
+    // Listen for auth state changes (e.g. token refresh / sign out from another tab)
+    sb.auth.onAuthStateChange((event, newSession) => {
+      if (event === 'SIGNED_OUT' || !newSession) {
+        window.location.replace('/login');
+      } else {
+        currentSession = newSession;
+      }
+    });
+  }
+
+  async function handleSignOut() {
+    if (sb) await sb.auth.signOut();
+    window.location.replace('/login');
+  }
+
+  initAuth();
+
+  // ── Drag and drop ─────────────────────────────────────────────────────────
   const dropZone = document.getElementById('dropZone');
   const fileInput = document.getElementById('fileInput');
 
@@ -355,9 +404,7 @@
   async function extractText(file) {
     const ext = file.name.split('.').pop().toLowerCase();
 
-    if (ext === 'txt') {
-      return await file.text();
-    }
+    if (ext === 'txt') return await file.text();
 
     if (ext === 'pdf') {
       const arrayBuffer = await file.arrayBuffer();
@@ -372,7 +419,6 @@
     }
 
     if (ext === 'doc' || ext === 'docx') {
-      // For Word docs, ask user to paste text (client-side DOCX parsing is heavy)
       throw new Error('For Word documents, please copy and paste the text directly into the text box below.');
     }
 
@@ -381,6 +427,11 @@
 
   async function startAnalysis() {
     hideError();
+
+    if (!currentSession) {
+      window.location.replace('/login');
+      return;
+    }
 
     let text = '';
     if (currentFile) {
@@ -401,7 +452,6 @@
 
     showLoading();
 
-    // Animate loading steps
     const steps = ['step1','step2','step3','step4'];
     let stepIdx = 0;
     const stepInterval = setInterval(() => {
@@ -413,13 +463,34 @@
     }, 800);
 
     try {
+      // Refresh session to ensure token is current
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { window.location.replace('/login'); return; }
+      currentSession = session;
+
       const res = await fetch('/api/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentSession.access_token}`,
+        },
         body: JSON.stringify({ text, filename: currentFilename }),
       });
 
       clearInterval(stepInterval);
+
+      if (res.status === 401) {
+        hideLoading();
+        window.location.replace('/login');
+        return;
+      }
+
+      if (res.status === 403) {
+        const err = await res.json();
+        hideLoading();
+        showUpgradePrompt(err);
+        return;
+      }
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Server error' }));
@@ -436,10 +507,21 @@
     }
   }
 
+  function showUpgradePrompt(errData) {
+    const box = document.getElementById('errorBox');
+    const tier = errData.tier || 'current';
+    const limit = errData.limit || '—';
+    box.innerHTML = `
+      ⚠ ${errData.error || 'Analysis limit reached.'}<br>
+      <a href="/#pricing" style="color:var(--gold);text-decoration:underline;font-size:0.85rem;margin-top:0.4rem;display:inline-block;">
+        View upgrade options →
+      </a>`;
+    box.classList.add('visible');
+  }
+
   function showResults(data) {
     hideLoading();
 
-    // Risk score circle
     const score = data.riskScore || 0;
     const scoreColor = score >= 70 ? 'var(--red)' : score >= 40 ? 'var(--yellow)' : 'var(--green)';
     const circle = document.getElementById('riskCircle');
@@ -448,18 +530,15 @@
     document.getElementById('riskScoreNum').style.color = scoreColor;
     document.getElementById('riskScoreNum').textContent = score;
 
-    // Risk badge
     const badge = document.getElementById('riskLabelBadge');
     badge.textContent = data.riskLabel || 'Unknown Risk';
     if (score >= 70) { badge.style.background = 'rgba(248,113,113,0.15)'; badge.style.color = 'var(--red)'; }
     else if (score >= 40) { badge.style.background = 'rgba(251,191,36,0.15)'; badge.style.color = 'var(--yellow)'; }
     else { badge.style.background = 'rgba(74,222,128,0.15)'; badge.style.color = 'var(--green)'; }
 
-    // Filename + summary
     document.getElementById('resultsFilename').textContent = currentFilename;
     document.getElementById('resultsSummary').textContent = data.summary || '';
 
-    // Red flags
     const flagsList = document.getElementById('flagsList');
     flagsList.innerHTML = '';
     if (!data.redFlags || data.redFlags.length === 0) {
@@ -480,7 +559,6 @@
       });
     }
 
-    // Key terms
     const termsList = document.getElementById('keyTermsList');
     termsList.innerHTML = '';
     (data.keyTerms || []).forEach(term => {
@@ -491,7 +569,6 @@
         </div>`;
     });
 
-    // Positives
     const positivesList = document.getElementById('positivesList');
     positivesList.innerHTML = '';
     (data.positives || []).forEach(p => {
@@ -505,7 +582,6 @@
   function showLoading() {
     document.getElementById('uploadSection').style.display = 'none';
     document.getElementById('loadingSection').classList.add('visible');
-    // Reset steps
     ['step1','step2','step3','step4'].forEach(s => document.getElementById(s).classList.remove('active'));
   }
 
@@ -528,7 +604,7 @@
 
   function showError(msg) {
     const box = document.getElementById('errorBox');
-    box.textContent = '⚠ ' + msg;
+    box.innerHTML = '⚠ ' + msg;
     box.classList.add('visible');
   }
 
@@ -563,7 +639,7 @@
     text += `\nNot legal advice. For informational purposes only.`;
 
     navigator.clipboard.writeText(text).then(() => {
-      const btn = document.querySelector('.action-btn-outline');
+      const btn = document.querySelector('[onclick="copyReport()"]');
       const orig = btn.textContent;
       btn.textContent = '✓ Copied!';
       setTimeout(() => btn.textContent = orig, 2000);

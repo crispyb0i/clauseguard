@@ -3,16 +3,114 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { text, filename } = req.body;
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Authentication required. Please log in.' });
+  }
+  const token = authHeader.slice(7);
 
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+  const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!SUPABASE_URL || !SERVICE_KEY) {
+    return res.status(500).json({ error: 'Server configuration error.' });
+  }
+
+  // Verify JWT with Supabase
+  const authRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'apikey': SUPABASE_ANON_KEY,
+    },
+  });
+
+  if (!authRes.ok) {
+    return res.status(401).json({ error: 'Session expired. Please log in again.' });
+  }
+
+  const authUser = await authRes.json();
+  const userId = authUser.id;
+
+  // ── Load user record ──────────────────────────────────────────────────────
+  const dbRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=subscription_tier,analyses_used,analyses_reset_date`,
+    {
+      headers: {
+        'apikey': SERVICE_KEY,
+        'Authorization': `Bearer ${SERVICE_KEY}`,
+      },
+    }
+  );
+
+  let userRows = await dbRes.json();
+
+  // Auto-create record if missing (edge case: trigger didn't fire)
+  if (!Array.isArray(userRows) || userRows.length === 0) {
+    const today = new Date().toISOString().split('T')[0];
+    await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+      method: 'POST',
+      headers: {
+        'apikey': SERVICE_KEY,
+        'Authorization': `Bearer ${SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({
+        id: userId,
+        email: authUser.email,
+        subscription_tier: 'free',
+        analyses_used: 0,
+        analyses_reset_date: today,
+      }),
+    });
+    userRows = [{ subscription_tier: 'free', analyses_used: 0, analyses_reset_date: today }];
+  }
+
+  const user = userRows[0];
+  let analysesUsed = user.analyses_used ?? 0;
+
+  // ── Monthly reset ─────────────────────────────────────────────────────────
+  const resetDate = new Date(user.analyses_reset_date);
+  const daysSinceReset = (Date.now() - resetDate.getTime()) / (1000 * 60 * 60 * 24);
+
+  if (daysSinceReset > 30) {
+    analysesUsed = 0;
+    const today = new Date().toISOString().split('T')[0];
+    await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SERVICE_KEY,
+        'Authorization': `Bearer ${SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ analyses_used: 0, analyses_reset_date: today }),
+    });
+  }
+
+  // ── Tier enforcement ──────────────────────────────────────────────────────
+  const LIMITS = { free: 3, starter: 10, pro: 50, team: Infinity };
+  const tier = user.subscription_tier || 'free';
+  const limit = LIMITS[tier] ?? 3;
+
+  if (limit !== Infinity && analysesUsed >= limit) {
+    return res.status(403).json({
+      error: `You've used all ${limit} analyses on your ${tier} plan this month. Upgrade to continue.`,
+      tier,
+      limit,
+      used: analysesUsed,
+    });
+  }
+
+  // ── Contract text ─────────────────────────────────────────────────────────
+  const { text, filename } = req.body;
   if (!text || text.trim().length < 50) {
     return res.status(400).json({ error: 'Contract text too short or missing.' });
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'API key not configured.' });
-  }
+  if (!apiKey) return res.status(500).json({ error: 'API key not configured.' });
 
   const prompt = `You are an expert contract lawyer. Analyze the following contract and return ONLY a valid JSON object with no markdown, no backticks, no explanation — just raw JSON.
 
@@ -69,14 +167,21 @@ positives should list 2-4 things that are standard or favorable.`;
     try {
       result = JSON.parse(raw);
     } catch (e) {
-      // Try extracting JSON if there's any wrapping text
       const match = raw.match(/\{[\s\S]*\}/);
-      if (match) {
-        result = JSON.parse(match[0]);
-      } else {
-        throw new Error('Could not parse response as JSON');
-      }
+      if (match) result = JSON.parse(match[0]);
+      else throw new Error('Could not parse response as JSON');
     }
+
+    // ── Increment usage ───────────────────────────────────────────────────
+    await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SERVICE_KEY,
+        'Authorization': `Bearer ${SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ analyses_used: analysesUsed + 1 }),
+    });
 
     return res.status(200).json(result);
   } catch (err) {
