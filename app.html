@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClauseGuard — Analyze Contract</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #0d1b2a; --navy-mid: #132236; --navy-light: #1c3150;
+    --cream: #f5f0e8; --cream-dark: #e8e0d0;
+    --gold: #c9a84c; --gold-light: #e8c96a;
+    --text-muted: rgba(245,240,232,0.55);
+    --border: rgba(201,168,76,0.2); --border-bright: rgba(201,168,76,0.45);
+    --red: #f87171; --yellow: #fbbf24; --green: #4ade80;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--navy); color: var(--cream); min-height: 100vh; }
+
+  /* NAV */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem; border-bottom: 1px solid var(--border);
+    background: rgba(13,27,42,0.95); backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; color: var(--cream); text-decoration: none; }
+  .nav-logo span { color: var(--gold); }
+  .nav-back { font-size: 0.82rem; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+  .nav-back:hover { color: var(--gold); }
+
+  /* MAIN LAYOUT */
+  .container { max-width: 860px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+
+  /* UPLOAD ZONE */
+  .upload-section { margin-bottom: 2rem; }
+  .upload-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .upload-sub { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.75rem; }
+
+  .drop-zone {
+    border: 1.5px dashed var(--border-bright); border-radius: 10px;
+    padding: 3rem 2rem; text-align: center; cursor: pointer;
+    transition: all 0.2s; background: rgba(201,168,76,0.03);
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--gold); background: rgba(201,168,76,0.07);
+  }
+  .drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .drop-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+  .drop-title { font-weight: 500; font-size: 1rem; color: var(--cream); margin-bottom: 0.3rem; }
+  .drop-sub { font-size: 0.82rem; color: var(--text-muted); }
+  .drop-formats { margin-top: 0.75rem; font-size: 0.75rem; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+
+  /* OR DIVIDER */
+  .divider { display: flex; align-items: center; gap: 1rem; margin: 1.25rem 0; color: var(--text-muted); font-size: 0.8rem; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* TEXT PASTE */
+  textarea {
+    width: 100%; min-height: 160px; padding: 1rem;
+    background: var(--navy-mid); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--cream); font-family: 'DM Mono', monospace;
+    font-size: 0.8rem; line-height: 1.6; resize: vertical;
+    transition: border-color 0.2s; outline: none;
+  }
+  textarea:focus { border-color: var(--gold); }
+  textarea::placeholder { color: var(--text-muted); }
+
+  /* FILE PREVIEW */
+  .file-preview {
+    display: none; align-items: center; gap: 0.75rem;
+    background: var(--navy-mid); border: 1px solid var(--border-bright);
+    border-radius: 8px; padding: 0.9rem 1.1rem; margin-bottom: 1rem;
+  }
+  .file-preview.visible { display: flex; }
+  .file-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .file-name { font-size: 0.875rem; font-weight: 500; color: var(--cream); }
+  .file-size { font-size: 0.75rem; color: var(--text-muted); }
+  .file-remove { margin-left: auto; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; padding: 0.2rem; transition: color 0.2s; }
+  .file-remove:hover { color: var(--red); }
+
+  /* ANALYZE BUTTON */
+  .analyze-btn {
+    width: 100%; padding: 1rem; margin-top: 1.25rem;
+    background: var(--gold); color: var(--navy);
+    border: none; border-radius: 6px; font-size: 1rem; font-weight: 500;
+    cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  }
+  .analyze-btn:hover:not(:disabled) { background: var(--gold-light); transform: translateY(-1px); }
+  .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* LOADING */
+  .loading { display: none; text-align: center; padding: 4rem 2rem; }
+  .loading.visible { display: block; }
+  .spinner {
+    width: 48px; height: 48px; border: 2px solid var(--border);
+    border-top-color: var(--gold); border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto 1.5rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; margin-bottom: 0.5rem; }
+  .loading-steps { font-size: 0.85rem; color: var(--text-muted); }
+  .loading-step { padding: 0.2rem 0; transition: color 0.3s; }
+  .loading-step.active { color: var(--gold); }
+
+  /* RESULTS */
+  .results { display: none; }
+  .results.visible { display: block; }
+
+  /* RISK SCORE HEADER */
+  .results-header {
+    background: var(--navy-mid); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.75rem; margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;
+  }
+  .risk-score-circle {
+    width: 88px; height: 88px; border-radius: 50%; flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border: 2px solid var(--score-color, var(--gold));
+    background: rgba(0,0,0,0.2);
+  }
+  .risk-score-num { font-family: 'Playfair Display', serif; font-size: 1.75rem; font-weight: 700; line-height: 1; color: var(--score-color, var(--gold)); }
+  .risk-score-label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+  .risk-label-badge {
+    display: inline-block; font-size: 0.75rem; font-weight: 500;
+    padding: 0.3rem 0.8rem; border-radius: 3px; margin-bottom: 0.5rem;
+    letter-spacing: 0.05em;
+  }
+  .results-filename { font-size: 0.82rem; color: var(--text-muted); font-family: 'DM Mono', monospace; margin-bottom: 0.75rem; }
+  .results-summary { font-size: 0.9rem; color: var(--cream); line-height: 1.7; }
+
+  /* SECTIONS */
+  .result-section { margin-bottom: 1.5rem; }
+  .result-section-title {
+    font-size: 0.7rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 0.9rem; padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* KEY TERMS */
+  .key-terms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .key-term {
+    background: var(--navy-mid); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.75rem 1rem;
+  }
+  .key-term-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.2rem; }
+  .key-term-value { font-size: 0.875rem; color: var(--cream); font-weight: 500; }
+
+  /* RED FLAGS */
+  .red-flag {
+    background: var(--navy-mid); border: 1px solid rgba(248,113,113,0.25);
+    border-left: 3px solid var(--flag-color, var(--red));
+    border-radius: 0 6px 6px 0; padding: 1rem 1.1rem; margin-bottom: 0.75rem;
+  }
+  .red-flag-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; }
+  .red-flag-severity { font-size: 0.68rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; padding: 0.15rem 0.5rem; border-radius: 2px; }
+  .sev-high { background: rgba(248,113,113,0.15); color: var(--red); }
+  .sev-medium { background: rgba(251,191,36,0.15); color: var(--yellow); }
+  .red-flag-clause { font-size: 0.875rem; font-weight: 500; color: var(--cream); }
+  .red-flag-issue { font-size: 0.83rem; color: var(--text-muted); margin-bottom: 0.5rem; line-height: 1.55; }
+  .red-flag-suggestion { font-size: 0.82rem; color: var(--green); line-height: 1.55; }
+  .red-flag-suggestion::before { content: '→ '; opacity: 0.7; }
+  .no-flags {
+    background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.2);
+    border-radius: 6px; padding: 1rem 1.1rem; font-size: 0.875rem; color: var(--green);
+  }
+
+  /* POSITIVES */
+  .positive-item { display: flex; gap: 0.6rem; align-items: flex-start; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-muted); }
+  .positive-item::before { content: '✓'; color: var(--green); font-weight: 500; flex-shrink: 0; margin-top: 1px; }
+
+  /* ACTIONS */
+  .results-actions { display: flex; gap: 0.75rem; margin-top: 2rem; flex-wrap: wrap; }
+  .action-btn {
+    padding: 0.7rem 1.4rem; border-radius: 5px; font-size: 0.875rem;
+    font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;
+  }
+  .action-btn-outline { background: transparent; border: 1px solid var(--border); color: var(--cream); }
+  .action-btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+  .action-btn-gold { background: var(--gold); border: none; color: var(--navy); }
+  .action-btn-gold:hover { background: var(--gold-light); }
+
+  /* ERROR */
+  .error-box {
+    display: none; background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.3);
+    border-radius: 8px; padding: 1rem 1.25rem; margin-top: 1rem;
+    font-size: 0.875rem; color: var(--red);
+  }
+  .error-box.visible { display: block; }
+
+  /* DISCLAIMER */
+  .disclaimer {
+    margin-top: 3rem; padding: 1rem 1.25rem;
+    background: rgba(201,168,76,0.05); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.75rem; color: var(--text-muted); line-height: 1.6;
+  }
+
+  @media (max-width: 600px) {
+    .key-terms-grid { grid-template-columns: 1fr; }
+    .results-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .container { padding: 2rem 1rem 4rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">Clause<span>Guard</span></a>
+  <a href="/" class="nav-back">← Back to home</a>
+</nav>
+
+<div class="container">
+
+  <!-- UPLOAD SECTION -->
+  <div class="upload-section" id="uploadSection">
+    <h1 class="upload-title">Analyze your contract</h1>
+    <p class="upload-sub">Upload a PDF or Word doc, or paste the contract text below. Your analysis will be ready in seconds.</p>
+
+    <div class="file-preview" id="filePreview">
+      <span class="file-icon" id="fileIcon">📄</span>
+      <div>
+        <div class="file-name" id="fileName"></div>
+        <div class="file-size" id="fileSize"></div>
+      </div>
+      <button class="file-remove" id="fileRemove" title="Remove file">✕</button>
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt">
+      <div class="drop-icon">📂</div>
+      <div class="drop-title">Drop your contract here</div>
+      <div class="drop-sub">or click to browse files</div>
+      <div class="drop-formats">PDF · DOCX · TXT</div>
+    </div>
+
+    <div class="divider">or paste contract text</div>
+
+    <textarea id="contractText" placeholder="Paste contract text here...&#10;&#10;e.g. THIS AGREEMENT is entered into as of..."></textarea>
+
+    <div class="error-box" id="errorBox"></div>
+
+    <button class="analyze-btn" id="analyzeBtn" onclick="startAnalysis()">
+      <span>⚡</span> Analyze Contract
+    </button>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading" id="loadingSection">
+    <div class="spinner"></div>
+    <div class="loading-title">Analyzing your contract...</div>
+    <div class="loading-steps">
+      <div class="loading-step" id="step1">Reading document structure</div>
+      <div class="loading-step" id="step2">Identifying clause types</div>
+      <div class="loading-step" id="step3">Detecting risk patterns</div>
+      <div class="loading-step" id="step4">Generating recommendations</div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results" id="resultsSection">
+
+    <div class="results-header" id="resultsHeader">
+      <div class="risk-score-circle" id="riskCircle">
+        <div class="risk-score-num" id="riskScoreNum">—</div>
+        <div class="risk-score-label">Risk</div>
+      </div>
+      <div style="flex:1; min-width:200px;">
+        <div class="risk-label-badge" id="riskLabelBadge"></div>
+        <div class="results-filename" id="resultsFilename"></div>
+        <div class="results-summary" id="resultsSummary"></div>
+      </div>
+    </div>
+
+    <div class="result-section" id="flagsSection">
+      <div class="result-section-title">⚠ Red flags</div>
+      <div id="flagsList"></div>
+    </div>
+
+    <div class="result-section">
+      <div class="result-section-title">🔑 Key terms</div>
+      <div class="key-terms-grid" id="keyTermsList"></div>
+    </div>
+
+    <div class="result-section">
+      <div class="result-section-title">✓ What looks good</div>
+      <div id="positivesList"></div>
+    </div>
+
+    <div class="results-actions">
+      <button class="action-btn action-btn-outline" onclick="resetApp()">← Analyze another contract</button>
+      <button class="action-btn action-btn-outline" onclick="copyReport()">📋 Copy report</button>
+      <a href="https://buy.stripe.com/dRm3cwadUa3CbnebBz2Fa01" class="action-btn action-btn-gold" target="_blank">Upgrade to Pro →</a>
+    </div>
+
+  </div>
+
+  <div class="disclaimer">
+    ⚠ ClauseGuard provides AI-generated analysis for informational purposes only. This is not legal advice. Always consult a qualified attorney before signing legally binding documents.
+  </div>
+
+</div>
+
+<script>
+  // PDF.js setup
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  let currentFile = null;
+  let currentFilename = 'Pasted text';
+  let lastResult = null;
+
+  // Drag and drop
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  fileInput.addEventListener('change', e => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+
+  document.getElementById('fileRemove').addEventListener('click', () => {
+    currentFile = null;
+    currentFilename = 'Pasted text';
+    document.getElementById('filePreview').classList.remove('visible');
+    document.getElementById('dropZone').style.display = '';
+    fileInput.value = '';
+  });
+
+  function handleFile(file) {
+    currentFile = file;
+    currentFilename = file.name;
+    const sizeKb = (file.size / 1024).toFixed(0);
+    const ext = file.name.split('.').pop().toLowerCase();
+    const icons = { pdf: '📕', doc: '📘', docx: '📘', txt: '📄' };
+
+    document.getElementById('fileIcon').textContent = icons[ext] || '📄';
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = sizeKb + ' KB';
+    document.getElementById('filePreview').classList.add('visible');
+    document.getElementById('dropZone').style.display = 'none';
+    hideError();
+  }
+
+  async function extractText(file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+
+    if (ext === 'txt') {
+      return await file.text();
+    }
+
+    if (ext === 'pdf') {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let text = '';
+      for (let i = 1; i <= Math.min(pdf.numPages, 30); i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map(item => item.str).join(' ') + '\n';
+      }
+      return text;
+    }
+
+    if (ext === 'doc' || ext === 'docx') {
+      // For Word docs, ask user to paste text (client-side DOCX parsing is heavy)
+      throw new Error('For Word documents, please copy and paste the text directly into the text box below.');
+    }
+
+    return await file.text();
+  }
+
+  async function startAnalysis() {
+    hideError();
+
+    let text = '';
+    if (currentFile) {
+      try {
+        text = await extractText(currentFile);
+      } catch (err) {
+        showError(err.message);
+        return;
+      }
+    } else {
+      text = document.getElementById('contractText').value.trim();
+    }
+
+    if (!text || text.length < 50) {
+      showError('Please upload a contract file or paste at least a few paragraphs of contract text.');
+      return;
+    }
+
+    showLoading();
+
+    // Animate loading steps
+    const steps = ['step1','step2','step3','step4'];
+    let stepIdx = 0;
+    const stepInterval = setInterval(() => {
+      if (stepIdx > 0) document.getElementById(steps[stepIdx-1]).classList.remove('active');
+      if (stepIdx < steps.length) {
+        document.getElementById(steps[stepIdx]).classList.add('active');
+        stepIdx++;
+      }
+    }, 800);
+
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, filename: currentFilename }),
+      });
+
+      clearInterval(stepInterval);
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Server error' }));
+        throw new Error(err.error || 'Analysis failed. Please try again.');
+      }
+
+      const result = await res.json();
+      lastResult = result;
+      showResults(result);
+    } catch (err) {
+      clearInterval(stepInterval);
+      hideLoading();
+      showError(err.message);
+    }
+  }
+
+  function showResults(data) {
+    hideLoading();
+
+    // Risk score circle
+    const score = data.riskScore || 0;
+    const scoreColor = score >= 70 ? 'var(--red)' : score >= 40 ? 'var(--yellow)' : 'var(--green)';
+    const circle = document.getElementById('riskCircle');
+    circle.style.setProperty('--score-color', scoreColor);
+    circle.style.borderColor = scoreColor;
+    document.getElementById('riskScoreNum').style.color = scoreColor;
+    document.getElementById('riskScoreNum').textContent = score;
+
+    // Risk badge
+    const badge = document.getElementById('riskLabelBadge');
+    badge.textContent = data.riskLabel || 'Unknown Risk';
+    if (score >= 70) { badge.style.background = 'rgba(248,113,113,0.15)'; badge.style.color = 'var(--red)'; }
+    else if (score >= 40) { badge.style.background = 'rgba(251,191,36,0.15)'; badge.style.color = 'var(--yellow)'; }
+    else { badge.style.background = 'rgba(74,222,128,0.15)'; badge.style.color = 'var(--green)'; }
+
+    // Filename + summary
+    document.getElementById('resultsFilename').textContent = currentFilename;
+    document.getElementById('resultsSummary').textContent = data.summary || '';
+
+    // Red flags
+    const flagsList = document.getElementById('flagsList');
+    flagsList.innerHTML = '';
+    if (!data.redFlags || data.redFlags.length === 0) {
+      flagsList.innerHTML = '<div class="no-flags">✓ No significant red flags detected. This contract appears relatively standard.</div>';
+    } else {
+      data.redFlags.forEach(flag => {
+        const isHigh = flag.severity === 'high';
+        const color = isHigh ? 'var(--red)' : 'var(--yellow)';
+        flagsList.innerHTML += `
+          <div class="red-flag" style="--flag-color: ${color}; border-left-color: ${color};">
+            <div class="red-flag-header">
+              <span class="red-flag-severity ${isHigh ? 'sev-high' : 'sev-medium'}">${flag.severity}</span>
+              <span class="red-flag-clause">${flag.clause}</span>
+            </div>
+            <div class="red-flag-issue">${flag.issue}</div>
+            <div class="red-flag-suggestion">${flag.suggestion}</div>
+          </div>`;
+      });
+    }
+
+    // Key terms
+    const termsList = document.getElementById('keyTermsList');
+    termsList.innerHTML = '';
+    (data.keyTerms || []).forEach(term => {
+      termsList.innerHTML += `
+        <div class="key-term">
+          <div class="key-term-label">${term.label}</div>
+          <div class="key-term-value">${term.value}</div>
+        </div>`;
+    });
+
+    // Positives
+    const positivesList = document.getElementById('positivesList');
+    positivesList.innerHTML = '';
+    (data.positives || []).forEach(p => {
+      positivesList.innerHTML += `<div class="positive-item">${p}</div>`;
+    });
+
+    document.getElementById('resultsSection').classList.add('visible');
+    document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function showLoading() {
+    document.getElementById('uploadSection').style.display = 'none';
+    document.getElementById('loadingSection').classList.add('visible');
+    // Reset steps
+    ['step1','step2','step3','step4'].forEach(s => document.getElementById(s).classList.remove('active'));
+  }
+
+  function hideLoading() {
+    document.getElementById('loadingSection').classList.remove('visible');
+  }
+
+  function resetApp() {
+    document.getElementById('uploadSection').style.display = '';
+    document.getElementById('resultsSection').classList.remove('visible');
+    document.getElementById('contractText').value = '';
+    currentFile = null;
+    currentFilename = 'Pasted text';
+    document.getElementById('filePreview').classList.remove('visible');
+    document.getElementById('dropZone').style.display = '';
+    fileInput.value = '';
+    lastResult = null;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function showError(msg) {
+    const box = document.getElementById('errorBox');
+    box.textContent = '⚠ ' + msg;
+    box.classList.add('visible');
+  }
+
+  function hideError() {
+    document.getElementById('errorBox').classList.remove('visible');
+  }
+
+  function copyReport() {
+    if (!lastResult) return;
+    const r = lastResult;
+    let text = `CLAUSEGUARD CONTRACT ANALYSIS\n`;
+    text += `${'='.repeat(40)}\n\n`;
+    text += `Risk Score: ${r.riskScore}/100 — ${r.riskLabel}\n`;
+    text += `File: ${currentFilename}\n\n`;
+    text += `SUMMARY\n${r.summary}\n\n`;
+
+    if (r.redFlags && r.redFlags.length > 0) {
+      text += `RED FLAGS\n`;
+      r.redFlags.forEach(f => {
+        text += `[${f.severity.toUpperCase()}] ${f.clause}\n`;
+        text += `Issue: ${f.issue}\n`;
+        text += `Suggestion: ${f.suggestion}\n\n`;
+      });
+    }
+
+    if (r.keyTerms) {
+      text += `KEY TERMS\n`;
+      r.keyTerms.forEach(t => text += `${t.label}: ${t.value}\n`);
+      text += '\n';
+    }
+
+    text += `\nNot legal advice. For informational purposes only.`;
+
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.action-btn-outline');
+      const orig = btn.textContent;
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => btn.textContent = orig, 2000);
+    });
+  }
+</script>
+</body>
+</html>
