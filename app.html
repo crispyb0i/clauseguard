@@ -241,6 +241,8 @@
   <div class="nav-user" id="navUser" style="display:none;">
     <span class="nav-email" id="navEmail"></span>
     <span class="nav-sep">·</span>
+    <button class="nav-signout" onclick="openPortal()">Manage subscription</button>
+    <span class="nav-sep">·</span>
     <button class="nav-signout" onclick="handleSignOut()">Sign out</button>
   </div>
   <a href="/" class="nav-back" id="navBack">← Back to home</a>
@@ -423,6 +425,26 @@
     fill.style.background = pct >= 100 ? 'var(--red)' : pct >= 70 ? 'var(--yellow)' : 'var(--gold)';
 
     document.getElementById('usageIndicator').style.display = 'block';
+  }
+
+  async function openPortal() {
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return window.location.replace('/login');
+      const res = await fetch('/api/portal', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Could not open billing portal. Please contact support.');
+        return;
+      }
+      const { url } = await res.json();
+      window.location.href = url;
+    } catch (e) {
+      alert('Could not open billing portal. Please contact support.');
+    }
   }
 
   async function handleSignOut() {
