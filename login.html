@@ -188,6 +188,14 @@
     transition: color 0.2s; position: relative;
   }
   .back-link:hover { color: var(--gold); }
+
+  .forgot-link {
+    display: block; text-align: right;
+    font-size: 0.78rem; color: var(--text-muted);
+    text-decoration: none; margin-top: 0.3rem;
+    transition: color 0.2s; cursor: pointer;
+  }
+  .forgot-link:hover { color: var(--gold); }
 </style>
 </head>
 <body>
@@ -195,7 +203,7 @@
 <a href="/" class="logo">Clause<span>Guard</span></a>
 
 <div class="card">
-  <div class="tabs">
+  <div class="tabs" id="tabs">
     <div class="tab active" id="tabSignin" onclick="switchTab('signin')">Sign in</div>
     <div class="tab" id="tabSignup" onclick="switchTab('signup')">Create account</div>
   </div>
@@ -211,12 +219,29 @@
     <div class="field">
       <label>Password</label>
       <input type="password" id="signinPassword" placeholder="••••••••" autocomplete="current-password">
+      <span class="forgot-link" onclick="showForgotPassword()">Forgot password?</span>
     </div>
     <button class="submit-btn" id="signinBtn" onclick="handleSignin()">
       <div class="spinner-sm"></div>
       <span class="btn-label">Sign in →</span>
     </button>
     <div class="alert" id="signinAlert"></div>
+  </div>
+
+  <!-- FORGOT PASSWORD -->
+  <div id="forgotForm" style="display:none;">
+    <div class="form-title">Reset password</div>
+    <div class="form-sub">Enter your email and we'll send you a reset link.</div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="forgotEmail" placeholder="you@example.com" autocomplete="email">
+    </div>
+    <button class="submit-btn" id="forgotBtn" onclick="handleForgotPassword()">
+      <div class="spinner-sm"></div>
+      <span class="btn-label">Send reset link →</span>
+    </button>
+    <div class="alert" id="forgotAlert"></div>
+    <span class="forgot-link" style="text-align:left;margin-top:1rem;" onclick="showSignin()">← Back to sign in</span>
   </div>
 
   <!-- SIGN UP -->
@@ -263,6 +288,44 @@
     document.getElementById('tabSignup').classList.toggle('active', !isSignin);
     document.getElementById('signinForm').style.display = isSignin ? '' : 'none';
     document.getElementById('signupForm').style.display = isSignin ? 'none' : '';
+    document.getElementById('forgotForm').style.display = 'none';
+    document.getElementById('tabs').style.display = '';
+  }
+
+  function showForgotPassword() {
+    document.getElementById('signinForm').style.display = 'none';
+    document.getElementById('signupForm').style.display = 'none';
+    document.getElementById('forgotForm').style.display = '';
+    document.getElementById('tabs').style.display = 'none';
+  }
+
+  function showSignin() {
+    switchTab('signin');
+  }
+
+  // ── Forgot password ───────────────────────────────────────────────────────
+  async function handleForgotPassword() {
+    if (!sb) return;
+    const email = document.getElementById('forgotEmail').value.trim();
+    const btn = document.getElementById('forgotBtn');
+    const alert = document.getElementById('forgotAlert');
+
+    if (!email) return showAlert(alert, 'error', 'Please enter your email address.');
+
+    setLoading(btn, true);
+    clearAlert(alert);
+
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://clauseguard.io/login',
+    });
+
+    setLoading(btn, false);
+
+    if (error) {
+      showAlert(alert, 'error', error.message);
+    } else {
+      showAlert(alert, 'success', 'Reset link sent! Check your email.');
+    }
   }
 
   // ── Keyboard submit ───────────────────────────────────────────────────────

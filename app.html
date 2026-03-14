@@ -205,6 +205,22 @@
     border-radius: 6px; font-size: 0.75rem; color: var(--text-muted); line-height: 1.6;
   }
 
+  /* USAGE INDICATOR */
+  .usage-indicator {
+    margin-bottom: 1.5rem; padding: 0.7rem 1rem;
+    background: var(--navy-mid); border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .usage-text {
+    font-size: 0.78rem; color: var(--text-muted);
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0.4rem;
+  }
+  .usage-text a { color: var(--gold); text-decoration: none; }
+  .usage-text a:hover { text-decoration: underline; }
+  .usage-track { height: 3px; background: rgba(201,168,76,0.12); border-radius: 2px; }
+  .usage-fill { height: 100%; border-radius: 2px; transition: width 0.3s, background 0.3s; }
+
   @media (max-width: 600px) {
     .key-terms-grid { grid-template-columns: 1fr; }
     .results-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
@@ -230,6 +246,14 @@
   <div class="upload-section" id="uploadSection">
     <h1 class="upload-title">Analyze your contract</h1>
     <p class="upload-sub">Upload a PDF or Word doc, or paste the contract text below. Your analysis will be ready in seconds.</p>
+
+    <div class="usage-indicator" id="usageIndicator" style="display:none;">
+      <div class="usage-text">
+        <span id="usageText"></span>
+        <a href="/#pricing" id="usageUpgradeLink" style="display:none;">Upgrade →</a>
+      </div>
+      <div class="usage-track"><div class="usage-fill" id="usageFill"></div></div>
+    </div>
 
     <div class="file-preview" id="filePreview">
       <span class="file-icon" id="fileIcon">📄</span>
@@ -304,7 +328,7 @@
     <div class="results-actions">
       <button class="action-btn action-btn-outline" onclick="resetApp()">← Analyze another contract</button>
       <button class="action-btn action-btn-outline" onclick="copyReport()">📋 Copy report</button>
-      <a href="https://buy.stripe.com/dRm3cwadUa3CbnebBz2Fa01" class="action-btn action-btn-gold" target="_blank">Upgrade to Pro →</a>
+      <a href="https://buy.stripe.com/5kQfZicm25Nmcriaxv2Fa04" class="action-btn action-btn-gold" target="_blank">Upgrade to Pro →</a>
     </div>
 
   </div>
@@ -353,6 +377,43 @@
         currentSession = newSession;
       }
     });
+
+    loadUsage();
+  }
+
+  const LIMITS = { free: 3, starter: 10, pro: 50, team: Infinity };
+
+  async function loadUsage() {
+    try {
+      const { data } = await sb
+        .from('users')
+        .select('subscription_tier, analyses_used')
+        .eq('id', currentSession.user.id)
+        .single();
+      if (!data) return;
+      renderUsage(data.analyses_used ?? 0, data.subscription_tier || 'free');
+    } catch (e) { /* non-critical */ }
+  }
+
+  function renderUsage(used, tier) {
+    const limit = LIMITS[tier] ?? 3;
+    if (limit === Infinity) return; // team — unlimited, don't show
+
+    window._usage = { used, limit, tier };
+
+    const pct = Math.min((used / limit) * 100, 100);
+    const remaining = limit - used;
+
+    document.getElementById('usageText').textContent =
+      `${used} of ${limit} analyses used this month`;
+    document.getElementById('usageUpgradeLink').style.display =
+      remaining <= Math.ceil(limit * 0.3) ? '' : 'none';
+
+    const fill = document.getElementById('usageFill');
+    fill.style.width = pct + '%';
+    fill.style.background = pct >= 100 ? 'var(--red)' : pct >= 70 ? 'var(--yellow)' : 'var(--gold)';
+
+    document.getElementById('usageIndicator').style.display = 'block';
   }
 
   async function handleSignOut() {
@@ -499,6 +560,7 @@
 
       const result = await res.json();
       lastResult = result;
+      if (window._usage) renderUsage(window._usage.used + 1, window._usage.tier);
       showResults(result);
     } catch (err) {
       clearInterval(stepInterval);
