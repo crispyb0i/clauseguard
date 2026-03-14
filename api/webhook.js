@@ -11,8 +11,28 @@ async function readRawBody(req) {
   });
 }
 
-// Map Stripe amount_total (cents) → subscription tier
+// Map Stripe price amount (cents) → subscription tier
 const TIER_BY_AMOUNT = { 2900: 'starter', 5900: 'pro', 9900: 'team' };
+
+async function getCustomerEmail(customerId) {
+  const res = await fetch(`https://api.stripe.com/v1/customers/${customerId}`, {
+    headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}` },
+  });
+  const customer = await res.json();
+  return customer.email || null;
+}
+
+async function patchUser(supabaseUrl, serviceKey, email, fields) {
+  await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': serviceKey,
+      'Authorization': `Bearer ${serviceKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(fields),
+  });
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -59,6 +79,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid JSON payload.' });
   }
 
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  // ── checkout.session.completed → upgrade user ─────────────────────────────
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const email = session.customer_details?.email || session.customer_email;
@@ -70,41 +94,20 @@ export default async function handler(req, res) {
       return res.status(200).json({ received: true });
     }
 
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    // Try to find existing user by email
     const lookupRes = await fetch(
       `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=id`,
-      {
-        headers: {
-          'apikey': SERVICE_KEY,
-          'Authorization': `Bearer ${SERVICE_KEY}`,
-        },
-      }
+      { headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` } }
     );
-
     const users = await lookupRes.json();
 
     if (Array.isArray(users) && users.length > 0) {
-      // User exists — upgrade their tier and reset usage counter
-      await fetch(`${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
-        method: 'PATCH',
-        headers: {
-          'apikey': SERVICE_KEY,
-          'Authorization': `Bearer ${SERVICE_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          subscription_tier: tier,
-          analyses_used: 0,
-          analyses_reset_date: today,
-        }),
+      await patchUser(SUPABASE_URL, SERVICE_KEY, email, {
+        subscription_tier: tier,
+        analyses_used: 0,
+        analyses_reset_date: today,
       });
       console.log(`Upgraded ${email} to ${tier}`);
     } else {
-      // User hasn't signed up yet — store pending subscription so the DB
-      // trigger can pick it up when they create their account
       await fetch(`${SUPABASE_URL}/rest/v1/pending_subscriptions`, {
         method: 'POST',
         headers: {
@@ -116,6 +119,37 @@ export default async function handler(req, res) {
         body: JSON.stringify({ email, subscription_tier: tier }),
       });
       console.log(`Stored pending subscription for ${email} (${tier})`);
+    }
+  }
+
+  // ── customer.subscription.deleted → downgrade to free ────────────────────
+  if (event.type === 'customer.subscription.deleted') {
+    const subscription = event.data.object;
+    const email = await getCustomerEmail(subscription.customer);
+    if (email) {
+      await patchUser(SUPABASE_URL, SERVICE_KEY, email, { subscription_tier: 'free' });
+      console.log(`Downgraded ${email} to free (subscription cancelled)`);
+    }
+  }
+
+  // ── customer.subscription.updated → sync tier or downgrade ───────────────
+  if (event.type === 'customer.subscription.updated') {
+    const subscription = event.data.object;
+    const email = await getCustomerEmail(subscription.customer);
+    if (!email) return res.status(200).json({ received: true });
+
+    const { status } = subscription;
+
+    if (['past_due', 'unpaid', 'canceled'].includes(status)) {
+      await patchUser(SUPABASE_URL, SERVICE_KEY, email, { subscription_tier: 'free' });
+      console.log(`Downgraded ${email} to free (status: ${status})`);
+    } else if (status === 'active') {
+      const amount = subscription.items?.data?.[0]?.price?.unit_amount;
+      const tier = TIER_BY_AMOUNT[amount];
+      if (tier) {
+        await patchUser(SUPABASE_URL, SERVICE_KEY, email, { subscription_tier: tier });
+        console.log(`Updated ${email} to ${tier} (subscription updated)`);
+      }
     }
   }
 
