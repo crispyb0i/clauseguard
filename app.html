@@ -241,7 +241,7 @@
   <div class="nav-user" id="navUser" style="display:none;">
     <span class="nav-email" id="navEmail"></span>
     <span class="nav-sep">·</span>
-    <button class="nav-signout" onclick="openPortal()">Manage subscription</button>
+    <button class="nav-signout" id="manageSubBtn" onclick="openPortal()" style="display:none;">Manage subscription</button>
     <span class="nav-sep">·</span>
     <button class="nav-signout" onclick="handleSignOut()">Sign out</button>
   </div>
@@ -425,6 +425,7 @@
     fill.style.background = pct >= 100 ? 'var(--red)' : pct >= 70 ? 'var(--yellow)' : 'var(--gold)';
 
     document.getElementById('usageIndicator').style.display = 'block';
+    document.getElementById('manageSubBtn').style.display = tier === 'free' ? 'none' : '';
   }
 
   async function openPortal() {
@@ -581,6 +582,13 @@
         const err = await res.json();
         hideLoading();
         showUpgradePrompt(err);
+        return;
+      }
+
+      if (res.status === 429) {
+        const err = await res.json();
+        hideLoading();
+        showError(err.error);
         return;
       }
 

@@ -35,7 +35,7 @@ export default async function handler(req, res) {
 
   // ── Load user record ──────────────────────────────────────────────────────
   const dbRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=subscription_tier,analyses_used,analyses_reset_date`,
+    `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=subscription_tier,analyses_used,analyses_reset_date,last_analysis_at`,
     {
       headers: {
         'apikey': SERVICE_KEY,
@@ -101,6 +101,16 @@ export default async function handler(req, res) {
       limit,
       used: analysesUsed,
     });
+  }
+
+  // ── Rate limiting (15s cooldown per user) ────────────────────────────────
+  if (user.last_analysis_at) {
+    const secondsSinceLast = (Date.now() - new Date(user.last_analysis_at).getTime()) / 1000;
+    if (secondsSinceLast < 15) {
+      return res.status(429).json({
+        error: `Please wait ${Math.ceil(15 - secondsSinceLast)} seconds before analyzing another contract.`,
+      });
+    }
   }
 
   // ── Contract text ─────────────────────────────────────────────────────────
@@ -180,7 +190,7 @@ positives should list 2-4 things that are standard or favorable.`;
         'Authorization': `Bearer ${SERVICE_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ analyses_used: analysesUsed + 1 }),
+      body: JSON.stringify({ analyses_used: analysesUsed + 1, last_analysis_at: new Date().toISOString() }),
     });
 
     return res.status(200).json(result);
