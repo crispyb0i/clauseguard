@@ -312,6 +312,42 @@
   .cta-section h2 { margin-bottom: 1rem; }
   .cta-section p { color: var(--text-muted); max-width: 480px; margin: 0 auto 2.5rem; }
 
+  /* WHY NOT CHATGPT */
+  .vs-section { background: var(--navy); }
+  .vs-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center;
+    margin-top: 3rem;
+  }
+  .vs-col-label {
+    font-size: 0.72rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .vs-col-label.muted { color: var(--text-muted); }
+  .vs-col-label.gold { color: var(--gold); }
+  .vs-card {
+    background: var(--navy-mid); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.75rem;
+  }
+  .vs-card.featured { border-color: var(--gold); }
+  .vs-item {
+    display: flex; gap: 0.75rem; align-items: flex-start;
+    padding: 0.65rem 0; border-bottom: 1px solid rgba(201,168,76,0.08);
+    font-size: 0.875rem;
+  }
+  .vs-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .vs-icon { flex-shrink: 0; margin-top: 1px; }
+  .vs-text { color: var(--text-muted); line-height: 1.5; }
+  .vs-text strong { color: var(--cream); font-weight: 500; display: block; }
+
+  /* PRIVACY CALLOUT */
+  .privacy-callout {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: rgba(39,174,96,0.08); border: 1px solid rgba(39,174,96,0.25);
+    color: #4ade80; padding: 0.45rem 1rem; border-radius: 4px;
+    font-size: 0.8rem; margin-top: 1.25rem;
+  }
+  .privacy-callout svg { flex-shrink: 0; }
+
   /* FOOTER */
   footer {
     padding: 2.5rem; text-align: center;
@@ -332,7 +368,7 @@
   .fade-up-4 { animation-delay: 0.55s; }
 
   @media (max-width: 900px) {
-    .hero-inner, .features-grid, .pricing-grid, .testimonials-grid, .steps { grid-template-columns: 1fr; }
+    .hero-inner, .features-grid, .pricing-grid, .testimonials-grid, .steps, .vs-grid { grid-template-columns: 1fr; }
     .steps::before { display: none; }
     nav { padding: 1rem 1.5rem; }
     .nav-links { display: none; }
@@ -368,6 +404,10 @@
         <a href="#how" class="btn-outline">See how it works</a>
       </div>
       <p style="font-size:0.78rem;color:var(--text-muted);margin-top:1rem;" class="fade-up fade-up-4">No credit card required for trial · Cancel anytime</p>
+      <div class="privacy-callout fade-up fade-up-4">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Your contracts are never stored or shared
+      </div>
     </div>
 
     <!-- MOCK DOC CARD -->
@@ -490,6 +530,67 @@
   </div>
 </section>
 
+<!-- WHY NOT CHATGPT -->
+<section class="section vs-section" id="vs-chatgpt">
+  <div class="section-inner">
+    <div class="section-label">Why ClauseGuard</div>
+    <h2>Why not just use ChatGPT?</h2>
+    <p class="section-sub">ChatGPT is a general-purpose tool. ClauseGuard is purpose-built for contract analysis — there's a meaningful difference.</p>
+    <div class="vs-grid">
+      <div>
+        <div class="vs-col-label muted">Generic AI (ChatGPT, etc.)</div>
+        <div class="vs-card">
+          <div class="vs-item">
+            <span class="vs-icon">❌</span>
+            <div class="vs-text"><strong>You write the prompts</strong>Know the right questions to ask or you'll miss critical clauses entirely.</div>
+          </div>
+          <div class="vs-item">
+            <span class="vs-icon">❌</span>
+            <div class="vs-text"><strong>No structured output</strong>A wall of text — no risk score, no flagged clause list, no actionable report.</div>
+          </div>
+          <div class="vs-item">
+            <span class="vs-icon">❌</span>
+            <div class="vs-text"><strong>No negotiation language</strong>You get a summary; you still have to figure out what to say back to the other party.</div>
+          </div>
+          <div class="vs-item">
+            <span class="vs-icon">❌</span>
+            <div class="vs-text"><strong>No contract memory</strong>Each session starts fresh — no history, no side-by-side comparison across deals.</div>
+          </div>
+          <div class="vs-item">
+            <span class="vs-icon">❌</span>
+            <div class="vs-text"><strong>Privacy uncertainty</strong>Your sensitive contract data may be used to train future models.</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="vs-col-label gold">ClauseGuard</div>
+        <div class="vs-card featured">
+          <div class="vs-item">
+            <span class="vs-icon">✅</span>
+            <div class="vs-text"><strong>Zero prompting required</strong>Upload and go. ClauseGuard knows exactly what to look for in any contract.</div>
+          </div>
+          <div class="vs-item">
+            <span class="vs-icon">✅</span>
+            <div class="vs-text"><strong>Structured report every time</strong>Risk score, flagged clauses, plain-English summary — consistently formatted, one click.</div>
+          </div>
+          <div class="vs-item">
+            <span class="vs-icon">✅</span>
+            <div class="vs-text"><strong>Ready-to-send counter-language</strong>Copy the exact negotiation text and paste it into your reply. No extra steps.</div>
+          </div>
+          <div class="vs-item">
+            <span class="vs-icon">✅</span>
+            <div class="vs-text"><strong>Full analysis history</strong>Every contract saved and searchable. Track how terms evolve across clients and deals.</div>
+          </div>
+          <div class="vs-item">
+            <span class="vs-icon">✅</span>
+            <div class="vs-text"><strong>Built-in privacy guarantee</strong>Your contracts are analyzed and immediately discarded — never stored, never shared.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- TESTIMONIALS -->
 <section class="section">
   <div class="section-inner">
@@ -602,7 +703,8 @@
     <a href="#features">Features</a> &nbsp;·&nbsp;
     <a href="#how">How it works</a> &nbsp;·&nbsp;
     <a href="#pricing">Pricing</a> &nbsp;·&nbsp;
-    <a href="mailto:hello@clauseguard.com">Contact</a>
+    <a href="/privacy">Privacy Policy</a> &nbsp;·&nbsp;
+    <a href="mailto:hello@clauseguard.io">Contact</a>
   </p>
   <p>© 2026 ClauseGuard. Not a law firm. Not legal advice. AI analysis for informational purposes.</p>
 </footer>

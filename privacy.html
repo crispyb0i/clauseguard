@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — ClauseGuard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0d1b2a;
+    --navy-mid: #132236;
+    --navy-light: #1c3150;
+    --cream: #f5f0e8;
+    --cream-dark: #e8e0d0;
+    --gold: #c9a84c;
+    --gold-light: #e8c96a;
+    --text-muted: rgba(245,240,232,0.55);
+    --border: rgba(201,168,76,0.2);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--cream);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 2.5rem;
+    background: rgba(13,27,42,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem; font-weight: 700;
+    color: var(--cream); letter-spacing: 0.02em;
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--gold); }
+  .nav-back {
+    color: var(--text-muted); text-decoration: none;
+    font-size: 0.875rem; transition: color 0.2s;
+  }
+  .nav-back:hover { color: var(--gold); }
+
+  .page-wrap {
+    max-width: 760px; margin: 0 auto;
+    padding: 9rem 2.5rem 6rem;
+  }
+
+  .page-label {
+    font-size: 0.72rem; font-weight: 500;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 1rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 700; color: var(--cream);
+    line-height: 1.2; margin-bottom: 0.75rem;
+  }
+
+  .last-updated {
+    font-size: 0.82rem; color: var(--text-muted);
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .trust-highlight {
+    display: flex; gap: 1rem; align-items: flex-start;
+    background: rgba(201,168,76,0.07); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin-bottom: 3rem;
+  }
+  .trust-highlight-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 1px; }
+  .trust-highlight p { font-size: 0.9rem; color: var(--cream); line-height: 1.6; }
+  .trust-highlight p strong { color: var(--gold); }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem; font-weight: 700;
+    color: var(--cream); margin-top: 2.5rem; margin-bottom: 0.75rem;
+  }
+
+  p {
+    font-size: 0.9rem; color: var(--text-muted);
+    margin-bottom: 1rem; line-height: 1.75;
+  }
+
+  ul {
+    list-style: none; margin-bottom: 1rem;
+  }
+  ul li {
+    font-size: 0.9rem; color: var(--text-muted);
+    padding: 0.35rem 0; padding-left: 1.25rem;
+    position: relative; line-height: 1.65;
+  }
+  ul li::before {
+    content: '·'; color: var(--gold);
+    position: absolute; left: 0; font-weight: 700;
+  }
+
+  a { color: var(--gold); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .section-divider {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  footer {
+    padding: 2.5rem; text-align: center;
+    font-size: 0.8rem; color: var(--text-muted);
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: var(--text-muted); }
+  footer a:hover { color: var(--gold); }
+
+  @media (max-width: 600px) {
+    nav { padding: 1rem 1.5rem; }
+    .page-wrap { padding: 8rem 1.5rem 4rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">Clause<span>Guard</span></a>
+  <a href="/" class="nav-back">← Back to home</a>
+</nav>
+
+<div class="page-wrap">
+  <div class="page-label">Legal</div>
+  <h1>Privacy Policy</h1>
+  <p class="last-updated">Last updated: March 2026</p>
+
+  <div class="trust-highlight">
+    <span class="trust-highlight-icon">🛡️</span>
+    <p><strong>The short version:</strong> Your contracts are analyzed by AI and immediately discarded. We do not store your contract documents, do not sell your data, and do not use your content to train AI models. This policy explains the details.</p>
+  </div>
+
+  <h2>1. Who we are</h2>
+  <p>ClauseGuard ("we," "us," or "our") is an AI-powered contract analysis service. Our registered contact for privacy matters is <a href="mailto:hello@clauseguard.io">hello@clauseguard.io</a>.</p>
+
+  <h2>2. What data we collect</h2>
+  <p>We collect only what is necessary to provide the service:</p>
+  <ul>
+    <li><strong>Account information:</strong> Your name and email address when you create an account.</li>
+    <li><strong>Billing information:</strong> Payment processing is handled entirely by Stripe. We never see or store your full card details.</li>
+    <li><strong>Usage data:</strong> Aggregate, anonymized metrics (number of analyses run, plan type, session duration) to improve the product.</li>
+    <li><strong>Contract text (temporary):</strong> The text extracted from your uploaded document is sent to our AI provider for analysis. It is not persisted after analysis completes. See Section 3 for full details.</li>
+  </ul>
+
+  <h2>3. How we handle your contracts</h2>
+  <p>This is the most important section for most users.</p>
+  <ul>
+    <li>When you upload a contract, the file is parsed client-side where possible and the extracted text is transmitted over an encrypted connection (TLS 1.2+).</li>
+    <li>The extracted text is sent to our AI provider solely to generate your analysis report. It is processed in memory and not written to persistent storage by ClauseGuard.</li>
+    <li>We do not use your contract content to train, fine-tune, or improve any AI model — ours or our provider's.</li>
+    <li>Analysis reports (the structured output ClauseGuard generates) are stored in your account history so you can revisit them. You can delete any report at any time from your dashboard.</li>
+    <li>If you close your account, all associated reports are permanently deleted within 30 days.</li>
+  </ul>
+
+  <h2>4. AI processing and third-party providers</h2>
+  <p>ClauseGuard uses large language model (LLM) APIs to power its analysis engine. Contract text is transmitted to these providers under data processing agreements that prohibit the use of customer data for model training. We select providers with strong data protection commitments.</p>
+  <p>We do not use your data for any purpose other than delivering the analysis you requested.</p>
+
+  <h2>5. Cookies and tracking</h2>
+  <p>We use a minimal set of cookies:</p>
+  <ul>
+    <li><strong>Session cookies:</strong> Required to keep you logged in. Expire when you close your browser or after 30 days of inactivity.</li>
+    <li><strong>Analytics:</strong> We use privacy-friendly, cookieless analytics to understand aggregate traffic patterns. No cross-site tracking, no advertising identifiers.</li>
+  </ul>
+  <p>We do not use advertising cookies, retargeting pixels, or any third-party tracking scripts.</p>
+
+  <h2>6. Data sharing and selling</h2>
+  <p>We do not sell, rent, or trade your personal data. Period.</p>
+  <p>We share data only in these limited circumstances:</p>
+  <ul>
+    <li>With service providers who help us operate the platform (hosting, payments, email delivery) under strict data processing agreements.</li>
+    <li>When required by law, a valid court order, or to protect the rights and safety of our users.</li>
+  </ul>
+
+  <h2>7. Your rights (GDPR & beyond)</h2>
+  <p>If you are located in the European Economic Area, United Kingdom, or a jurisdiction with similar data protection laws, you have the following rights:</p>
+  <ul>
+    <li><strong>Access:</strong> Request a copy of the personal data we hold about you.</li>
+    <li><strong>Rectification:</strong> Correct inaccurate or incomplete data.</li>
+    <li><strong>Erasure:</strong> Request deletion of your account and associated data ("right to be forgotten").</li>
+    <li><strong>Portability:</strong> Receive your data in a portable, machine-readable format.</li>
+    <li><strong>Objection:</strong> Object to processing based on legitimate interests.</li>
+    <li><strong>Restriction:</strong> Request that we limit how we process your data.</li>
+  </ul>
+  <p>To exercise any of these rights, email <a href="mailto:hello@clauseguard.io">hello@clauseguard.io</a>. We will respond within 30 days.</p>
+
+  <h2>8. Data retention</h2>
+  <ul>
+    <li><strong>Contract documents:</strong> Never stored — discarded immediately after analysis.</li>
+    <li><strong>Analysis reports:</strong> Retained in your account until you delete them or close your account.</li>
+    <li><strong>Account data:</strong> Retained for the duration of your account, plus 90 days after closure for legal and billing purposes.</li>
+    <li><strong>Billing records:</strong> Retained for 7 years as required by financial regulations.</li>
+  </ul>
+
+  <h2>9. Security</h2>
+  <p>We use industry-standard safeguards including TLS encryption in transit, encrypted storage at rest, access controls, and regular security reviews. No system is perfectly secure — if you believe you have found a vulnerability, please contact us at <a href="mailto:hello@clauseguard.io">hello@clauseguard.io</a>.</p>
+
+  <h2>10. Children's privacy</h2>
+  <p>ClauseGuard is not directed at children under 16. We do not knowingly collect personal data from children. If you believe a child has provided us with personal data, please contact us and we will delete it promptly.</p>
+
+  <h2>11. Changes to this policy</h2>
+  <p>We may update this policy as the product evolves. Material changes will be communicated by email to registered users at least 14 days before they take effect. The "last updated" date at the top of this page reflects the most recent revision.</p>
+
+  <h2>12. Contact</h2>
+  <p>For any privacy-related questions, requests, or concerns, contact us at:</p>
+  <p><a href="mailto:hello@clauseguard.io">hello@clauseguard.io</a></p>
+
+  <hr class="section-divider">
+  <p style="font-size:0.8rem;">ClauseGuard is not a law firm and does not provide legal advice. This privacy policy is informational and does not constitute legal counsel.</p>
+</div>
+
+<footer>
+  <p style="margin-bottom:0.5rem;">
+    <a href="/">Home</a> &nbsp;·&nbsp;
+    <a href="/#features">Features</a> &nbsp;·&nbsp;
+    <a href="/#pricing">Pricing</a> &nbsp;·&nbsp;
+    <a href="mailto:hello@clauseguard.io">Contact</a>
+  </p>
+  <p>© 2026 ClauseGuard. Not a law firm. Not legal advice.</p>
+</footer>
+
+</body>
+</html>
