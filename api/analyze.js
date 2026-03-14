@@ -195,6 +195,25 @@ positives should list 2-4 things that are standard or favorable.`;
       body: JSON.stringify({ analyses_used: analysesUsed + 1, last_analysis_at: new Date().toISOString() }),
     });
 
+    // ── Save to history ───────────────────────────────────────────────────
+    await fetch(`${SUPABASE_URL}/rest/v1/analyses`, {
+      method: 'POST',
+      headers: {
+        'apikey': SERVICE_KEY,
+        'Authorization': `Bearer ${SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        filename: filename || 'Pasted text',
+        risk_score: result.riskScore,
+        risk_label: result.riskLabel,
+        summary: result.summary,
+        result,
+      }),
+    });
+
     return res.status(200).json(result);
   } catch (err) {
     Sentry.captureException(err);

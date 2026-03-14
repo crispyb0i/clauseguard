@@ -227,6 +227,29 @@
     .results-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
     .container { padding: 2rem 1rem 4rem; }
   }
+
+  /* VIEW TABS */
+  .view-tabs { display: flex; margin-bottom: 2rem; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; width: fit-content; }
+  .view-tab { padding: 0.5rem 1.25rem; font-size: 0.875rem; background: none; border: none; cursor: pointer; color: var(--text-muted); font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .view-tab.active { background: var(--gold); color: var(--navy); font-weight: 500; }
+  .view-tab:not(.active):hover { color: var(--cream); }
+
+  /* HISTORY */
+  .history-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .history-sub { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+  .history-item { background: var(--navy-mid); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; cursor: pointer; transition: border-color 0.15s, transform 0.15s; display: flex; align-items: flex-start; gap: 1rem; }
+  .history-item:hover { border-color: var(--border-bright); transform: translateY(-1px); }
+  .hist-score { width: 48px; height: 48px; border-radius: 50%; border: 2px solid; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 600; }
+  .history-item-body { flex: 1; min-width: 0; }
+  .hist-filename { font-weight: 500; font-size: 0.95rem; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hist-meta { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.4rem; }
+  .hist-summary { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .hist-arrow { font-size: 0.8rem; color: var(--gold); flex-shrink: 0; margin-top: 0.3rem; }
+  .history-empty { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+  .history-empty h3 { font-family: 'Playfair Display', serif; margin-bottom: 0.75rem; color: var(--cream); }
+  .history-upgrade { text-align: center; padding: 3rem 2rem; }
+  .history-upgrade h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; margin-bottom: 0.75rem; }
+  .history-upgrade p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
 </style>
 <!-- PostHog Analytics -->
 <script>
@@ -252,6 +275,19 @@
 </nav>
 
 <div class="container">
+
+  <!-- VIEW TABS -->
+  <div class="view-tabs" id="viewTabs">
+    <button class="view-tab active" data-view="analyze" onclick="showView('analyze')">Analyze</button>
+    <button class="view-tab" data-view="history" onclick="showView('history')">History</button>
+  </div>
+
+  <!-- HISTORY SECTION -->
+  <div id="historySection" style="display:none;">
+    <h2 class="history-title">Analysis History</h2>
+    <p class="history-sub" id="historySubtext"></p>
+    <div id="historyList"></div>
+  </div>
 
   <!-- UPLOAD SECTION -->
   <div class="upload-section" id="uploadSection">
@@ -686,6 +722,7 @@
   }
 
   function showLoading() {
+    document.getElementById('viewTabs').style.display = 'none';
     document.getElementById('uploadSection').style.display = 'none';
     document.getElementById('loadingSection').classList.add('visible');
     ['step1','step2','step3','step4'].forEach(s => document.getElementById(s).classList.remove('active'));
@@ -693,9 +730,11 @@
 
   function hideLoading() {
     document.getElementById('loadingSection').classList.remove('visible');
+    document.getElementById('viewTabs').style.display = '';
   }
 
   function resetApp() {
+    showView('analyze');
     document.getElementById('uploadSection').style.display = '';
     document.getElementById('resultsSection').classList.remove('visible');
     document.getElementById('contractText').value = '';
@@ -716,6 +755,109 @@
 
   function hideError() {
     document.getElementById('errorBox').classList.remove('visible');
+  }
+
+  // ── View switcher ─────────────────────────────────────────────────────────
+  const analyzeViewIds = ['uploadSection', 'loadingSection', 'resultsSection'];
+
+  function showView(view) {
+    const isHistory = view === 'history';
+    document.getElementById('historySection').style.display = isHistory ? '' : 'none';
+    analyzeViewIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.dataset.hiddenByTab = isHistory ? 'true' : 'false';
+    });
+    if (isHistory) {
+      document.getElementById('uploadSection').style.display = 'none';
+      document.getElementById('loadingSection').classList.remove('visible');
+      document.getElementById('resultsSection').classList.remove('visible');
+      loadHistory();
+    } else {
+      document.getElementById('uploadSection').style.display = '';
+    }
+    document.querySelectorAll('.view-tab').forEach(t =>
+      t.classList.toggle('active', t.dataset.view === view));
+  }
+
+  // ── History ───────────────────────────────────────────────────────────────
+  let historyCache = {};
+
+  async function loadHistory() {
+    const tier = window._usage?.tier || 'free';
+    const historyList = document.getElementById('historyList');
+    const historySub = document.getElementById('historySubtext');
+    historyCache = {};
+
+    if (tier === 'free') {
+      historyList.innerHTML = `
+        <div class="history-upgrade">
+          <h3>History requires a paid plan</h3>
+          <p>Upgrade to Starter or above to save and review your past contract analyses.</p>
+          <a href="/#pricing" style="display:inline-flex;align-items:center;gap:0.5rem;background:var(--gold);color:var(--navy);padding:0.7rem 2rem;border-radius:4px;text-decoration:none;font-weight:500;">View plans →</a>
+        </div>`;
+      return;
+    }
+
+    historyList.innerHTML = '<div class="history-empty"><p>Loading...</p></div>';
+
+    try {
+      let query = sb.from('analyses')
+        .select('id, filename, risk_score, risk_label, summary, result, created_at')
+        .eq('user_id', currentSession.user.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (tier === 'starter') {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 90);
+        query = query.gte('created_at', cutoff.toISOString());
+        historySub.textContent = 'Last 90 days';
+      } else {
+        historySub.textContent = 'All analyses';
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        historyList.innerHTML = `
+          <div class="history-empty">
+            <h3>No analyses yet</h3>
+            <p>Your contract analyses will appear here once you analyze your first document.</p>
+          </div>`;
+        return;
+      }
+
+      data.forEach(item => { historyCache[item.id] = item; });
+
+      historyList.innerHTML = data.map(item => {
+        const score = item.risk_score || 0;
+        const scoreColor = score >= 70 ? 'var(--red)' : score >= 40 ? 'var(--yellow)' : 'var(--green)';
+        const date = new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        return `
+          <div class="history-item" onclick="viewHistoryItem('${item.id}')">
+            <div class="hist-score" style="border-color:${scoreColor}; color:${scoreColor}">${score}</div>
+            <div class="history-item-body">
+              <div class="hist-filename">${item.filename}</div>
+              <div class="hist-meta">${date} · ${item.risk_label || 'Unknown Risk'}</div>
+              <div class="hist-summary">${item.summary || ''}</div>
+            </div>
+            <div class="hist-arrow">View →</div>
+          </div>`;
+      }).join('');
+    } catch (e) {
+      historyList.innerHTML = '<div class="history-empty"><p>Could not load history. Please try again.</p></div>';
+    }
+  }
+
+  function viewHistoryItem(id) {
+    const item = historyCache[id];
+    if (!item) return;
+    currentFilename = item.filename;
+    lastResult = item.result;
+    showView('analyze');
+    document.getElementById('uploadSection').style.display = 'none';
+    showResults(item.result);
   }
 
   function copyReport() {
