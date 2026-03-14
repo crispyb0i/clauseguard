@@ -4,6 +4,7 @@
     { "src": "/app", "dest": "/app.html" },
     { "src": "/login", "dest": "/login.html" },
     { "src": "/privacy", "dest": "/privacy.html" },
+    { "src": "/tos", "dest": "/tos.html" },
     { "src": "/", "dest": "/index.html" }
   ]
 }

@@ -135,8 +135,11 @@
 </style>
 <!-- PostHog Analytics -->
 <script>
-  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]);t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+" (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-  posthog.init('phc_HoAGzPUyLt6Gbq719YYwqMfvJvqF9KoTrDvgV7hLarx', {api_host: 'https://us.i.posthog.com', person_profiles: 'identified_only'});
+  function initAnalytics() {
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]);t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+" (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('phc_HoAGzPUyLt6Gbq719YYwqMfvJvqF9KoTrDvgV7hLarx', {api_host: 'https://us.i.posthog.com', person_profiles: 'identified_only'});
+  }
+  if (localStorage.getItem('cg_consent') === 'yes') initAnalytics();
 </script>
 </head>
 <body>
@@ -245,5 +248,25 @@
   <p>© 2026 ClauseGuard. Not a law firm. Not legal advice.</p>
 </footer>
 
+<!-- Cookie consent banner -->
+<div id="cookieBanner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:999; background:var(--navy-mid); border-top:1px solid var(--border); padding:1rem 2rem; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+  <p style="font-size:0.82rem; color:var(--text-muted); margin:0;">We use analytics to improve ClauseGuard. <a href="/privacy" style="color:var(--gold);">Privacy Policy</a></p>
+  <div style="display:flex; gap:0.75rem; flex-shrink:0;">
+    <button onclick="declineCookies()" style="background:none; border:1px solid var(--border); color:var(--text-muted); padding:0.4rem 1rem; border-radius:4px; cursor:pointer; font-size:0.82rem; font-family:'DM Sans',sans-serif;">Decline</button>
+    <button onclick="acceptCookies()" style="background:var(--gold); border:none; color:var(--navy); padding:0.4rem 1rem; border-radius:4px; cursor:pointer; font-size:0.82rem; font-weight:500; font-family:'DM Sans',sans-serif;">Accept</button>
+  </div>
+</div>
+<script>
+  function acceptCookies() {
+    localStorage.setItem('cg_consent', 'yes');
+    document.getElementById('cookieBanner').style.display = 'none';
+    initAnalytics();
+  }
+  function declineCookies() {
+    localStorage.setItem('cg_consent', 'no');
+    document.getElementById('cookieBanner').style.display = 'none';
+  }
+  if (!localStorage.getItem('cg_consent')) document.getElementById('cookieBanner').style.display = 'flex';
+</script>
 </body>
 </html>

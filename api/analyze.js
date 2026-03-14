@@ -1,3 +1,5 @@
+import { Sentry } from './_sentry.js';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -195,6 +197,7 @@ positives should list 2-4 things that are standard or favorable.`;
 
     return res.status(200).json(result);
   } catch (err) {
+    Sentry.captureException(err);
     console.error('Handler error:', err);
     return res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }

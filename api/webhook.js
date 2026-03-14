@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { Sentry } from './_sentry.js';
 
 export const config = { api: { bodyParser: false } };
 
@@ -76,6 +77,7 @@ export default async function handler(req, res) {
   try {
     event = JSON.parse(raw.toString());
   } catch (e) {
+    Sentry.captureException(e);
     return res.status(400).json({ error: 'Invalid JSON payload.' });
   }
 
