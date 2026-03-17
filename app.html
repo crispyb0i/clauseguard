@@ -88,6 +88,34 @@
   .file-remove { margin-left: auto; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; padding: 0.2rem; transition: color 0.2s; }
   .file-remove:hover { color: var(--red); }
 
+  /* SAMPLE CONTRACT BUTTON */
+  .sample-btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: none; border: 1px solid var(--border); color: var(--text-muted);
+    padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.82rem;
+    cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    margin-top: 0.75rem;
+  }
+  .sample-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* SIGNUP CTA BANNER (shown after sample analysis) */
+  .sample-cta {
+    background: linear-gradient(135deg, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.06) 100%);
+    border: 1px solid rgba(201,168,76,0.4);
+    border-radius: 8px; padding: 1.25rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;
+  }
+  .sample-cta-text { font-size: 0.9rem; color: var(--cream); }
+  .sample-cta-text span { color: var(--gold); font-weight: 500; }
+  .sample-cta-btn {
+    background: var(--gold); color: var(--navy);
+    padding: 0.55rem 1.25rem; border-radius: 4px;
+    text-decoration: none; font-weight: 500; font-size: 0.85rem;
+    white-space: nowrap; transition: background 0.2s;
+  }
+  .sample-cta-btn:hover { background: var(--gold-light); }
+
   /* ANALYZE BUTTON */
   .analyze-btn {
     width: 100%; padding: 1rem; margin-top: 1.25rem;
@@ -332,6 +360,9 @@
       <div class="drop-sub">or click to browse files</div>
       <div class="drop-formats">PDF · DOCX · TXT</div>
     </div>
+    <div style="text-align:center;">
+      <button class="sample-btn" onclick="loadSampleContract()">📋 Try with a sample contract</button>
+    </div>
 
     <div class="divider">or paste contract text</div>
 
@@ -366,6 +397,11 @@
         <div class="results-filename" id="resultsFilename"></div>
         <div class="results-summary" id="resultsSummary"></div>
       </div>
+    </div>
+
+    <div id="sampleCta" style="display:none;" class="sample-cta">
+      <div class="sample-cta-text">This was a <span>sample analysis</span>. Sign up free to analyze your own contracts — 3 analyses included, no credit card required.</div>
+      <a href="/login" class="sample-cta-btn" onclick="if(window.posthog) posthog.capture('sample_cta_clicked')">Sign up free →</a>
     </div>
 
     <div class="result-section" id="flagsSection">
@@ -581,6 +617,50 @@
     return await file.text();
   }
 
+  let isSampleAnalysis = false;
+
+  const SAMPLE_CONTRACT = `MUTUAL NON-DISCLOSURE AGREEMENT
+
+This Mutual Non-Disclosure Agreement ("Agreement") is entered into as of January 1, 2026, between Acme Corp, a Delaware corporation ("Company"), and the undersigned party ("Recipient").
+
+1. CONFIDENTIAL INFORMATION
+"Confidential Information" means any and all technical and non-technical information disclosed by either party, including but not limited to business plans, customer data, financial projections, trade secrets, and proprietary software.
+
+2. OBLIGATIONS
+Recipient agrees to: (a) hold all Confidential Information in strict confidence; (b) not disclose Confidential Information to any third party without prior written consent; (c) use Confidential Information solely for evaluating a potential business relationship.
+
+3. NON-COMPETE
+During the term of this Agreement and for a period of 36 months thereafter, Recipient shall not, directly or indirectly, engage in any business activity that competes with Company anywhere in the world, including but not limited to soliciting Company's customers or hiring Company's employees.
+
+4. INTELLECTUAL PROPERTY ASSIGNMENT
+Any work product, invention, or development created by Recipient during or arising out of discussions with Company, whether or not during working hours, shall be the sole and exclusive property of Company. Recipient hereby irrevocably assigns all intellectual property rights in such work product to Company.
+
+5. TERM AND TERMINATION
+This Agreement shall commence on the date first written above and continue for a period of 5 years. Company may terminate this Agreement at any time, for any reason, with immediate effect and without notice to Recipient.
+
+6. LIMITATION OF LIABILITY
+IN NO EVENT SHALL COMPANY BE LIABLE FOR ANY DAMAGES ARISING OUT OF OR RELATED TO THIS AGREEMENT, INCLUDING DIRECT, INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. COMPANY'S TOTAL LIABILITY SHALL NOT EXCEED $100.
+
+7. GOVERNING LAW AND DISPUTE RESOLUTION
+This Agreement shall be governed by the laws of Delaware. Any disputes shall be resolved exclusively through binding arbitration in Wilmington, Delaware. Recipient waives any right to participate in class action proceedings.
+
+8. ENTIRE AGREEMENT
+This Agreement constitutes the entire agreement between the parties. Company reserves the right to modify this Agreement at any time by posting a revised version, and continued use of any Company services shall constitute acceptance.
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.
+
+ACME CORP: ___________________     RECIPIENT: ___________________`;
+
+  function loadSampleContract() {
+    const textarea = document.getElementById('contractText');
+    textarea.value = SAMPLE_CONTRACT;
+    isSampleAnalysis = true;
+    currentFilename = 'Sample NDA (Acme Corp).txt';
+    textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    textarea.style.borderColor = 'rgba(201,168,76,0.5)';
+    if (window.posthog) posthog.capture('sample_contract_loaded');
+  }
+
   async function startAnalysis() {
     hideError();
 
@@ -761,6 +841,7 @@
       positivesList.innerHTML += `<div class="positive-item">${p}</div>`;
     });
 
+    document.getElementById('sampleCta').style.display = isSampleAnalysis ? 'flex' : 'none';
     document.getElementById('resultsSection').classList.add('visible');
     document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -781,8 +862,10 @@
     document.getElementById('uploadSection').style.display = '';
     document.getElementById('resultsSection').classList.remove('visible');
     document.getElementById('contractText').value = '';
+    document.getElementById('contractText').style.borderColor = '';
     currentFile = null;
     currentFilename = 'Pasted text';
+    isSampleAnalysis = false;
     document.getElementById('filePreview').classList.remove('visible');
     document.getElementById('dropZone').style.display = '';
     fileInput.value = '';
