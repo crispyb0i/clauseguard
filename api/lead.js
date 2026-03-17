@@ -1,3 +1,5 @@
+import { sendEmail, EMAILS } from './_email.js';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -29,6 +31,8 @@ export default async function handler(req, res) {
   if (!r.ok && r.status !== 409) {
     return res.status(500).json({ error: 'Failed to save email.' });
   }
+
+  sendEmail(EMAILS.checklist(email)).catch(() => {});
 
   return res.status(200).json({ ok: true });
 }

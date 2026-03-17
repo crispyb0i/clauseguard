@@ -202,13 +202,13 @@ positives should list 2-4 things that are standard or favorable.`;
     });
 
     // ── Save to history ───────────────────────────────────────────────────
-    await fetch(`${SUPABASE_URL}/rest/v1/analyses`, {
+    const saveRes = await fetch(`${SUPABASE_URL}/rest/v1/analyses`, {
       method: 'POST',
       headers: {
         'apikey': SERVICE_KEY,
         'Authorization': `Bearer ${SERVICE_KEY}`,
         'Content-Type': 'application/json',
-        'Prefer': 'return=minimal',
+        'Prefer': 'return=representation',
       },
       body: JSON.stringify({
         user_id: userId,
@@ -220,7 +220,10 @@ positives should list 2-4 things that are standard or favorable.`;
       }),
     });
 
-    return res.status(200).json(result);
+    const saved = saveRes.ok ? await saveRes.json() : [];
+    const shareToken = saved[0]?.share_token ?? null;
+
+    return res.status(200).json({ ...result, _shareToken: shareToken });
   } catch (err) {
     Sentry.captureException(err);
     console.error('Handler error:', err);

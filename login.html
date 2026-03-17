@@ -211,7 +211,7 @@
 
 <a href="/" class="logo">Clause<span>Guard</span></a>
 
-<div class="card">
+<div class="card" id="card" style="opacity:0;transition:opacity 0.2s ease;">
   <div class="tabs" id="tabs">
     <div class="tab active" id="tabSignin" onclick="switchTab('signin')">Sign in</div>
     <div class="tab" id="tabSignup" onclick="switchTab('signup')">Create account</div>
@@ -288,7 +288,10 @@
 
     // Already logged in? → /app
     const { data: { session } } = await sb.auth.getSession();
-    if (session) window.location.replace('/app');
+    if (session) { window.location.replace('/app'); return; }
+
+    // Not logged in — reveal the form
+    document.getElementById('card').style.opacity = '1';
   }
 
   initSupabase();

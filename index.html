@@ -438,6 +438,20 @@
   }
   if (localStorage.getItem('cg_consent') === 'yes') initAnalytics();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  (async () => {
+    try {
+      const cfg = await fetch('/api/config').then(r => r.json());
+      const sb = supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        document.getElementById('navCta').innerHTML =
+          `<a href="/app" style="font-size:0.875rem;font-weight:600;color:var(--gold);text-decoration:none;">Go to app →</a>`;
+      }
+    } catch (e) {}
+  })();
+</script>
 </head>
 <body>
 
@@ -447,9 +461,9 @@
   <ul class="nav-links">
     <li><a href="#features">Features</a></li>
     <li><a href="#how">How it works</a></li>
-    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="/pricing">Pricing</a></li>
   </ul>
-  <div style="display:flex;align-items:center;gap:1rem;">
+  <div id="navCta" style="display:flex;align-items:center;gap:1rem;">
     <a href="/login" style="font-size:0.875rem;color:var(--text-muted);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='var(--cream)'" onmouseout="this.style.color='var(--text-muted)'">Log in</a>
     <a href="/login" class="nav-cta">Start free →</a>
   </div>
@@ -472,7 +486,7 @@
       <p style="font-size:0.78rem;color:var(--text-muted);margin-top:1rem;" class="fade-up fade-up-4">3 free analyses · No credit card required</p>
       <div class="privacy-callout fade-up fade-up-4">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        Your contracts are never stored or shared
+        Your contract files are never stored on our servers
       </div>
     </div>
 
@@ -649,7 +663,7 @@
           </div>
           <div class="vs-item">
             <span class="vs-icon">✅</span>
-            <div class="vs-text"><strong>Built-in privacy guarantee</strong>Your contracts are analyzed and immediately discarded — never stored, never shared.</div>
+            <div class="vs-text"><strong>Privacy-first by design</strong>Your contract files are never retained on our servers. Only your analysis report is saved — privately in your account history.</div>
           </div>
         </div>
       </div>

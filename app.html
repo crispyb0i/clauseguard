@@ -31,11 +31,22 @@
   .nav-logo span { color: var(--gold); }
   .nav-back { font-size: 0.82rem; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
   .nav-back:hover { color: var(--gold); }
-  .nav-user { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; }
+  .nav-user { display: flex; align-items: center; gap: 0.75rem; font-size: 0.82rem; position: relative; }
   .nav-email { color: var(--text-muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .nav-sep { color: var(--border); }
-  .nav-signout { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.82rem; font-family: 'DM Sans', sans-serif; padding: 0; transition: color 0.2s; }
-  .nav-signout:hover { color: var(--gold); }
+  .nav-gear { background: none; border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; padding: 0.35rem 0.5rem; border-radius: 6px; line-height: 1; transition: border-color 0.15s, color 0.15s; font-size: 1rem; }
+  .nav-gear:hover { border-color: var(--border-bright); color: var(--cream); }
+  .nav-dropdown {
+    display: none; position: absolute; top: calc(100% + 8px); right: 0;
+    background: var(--navy-mid); border: 1px solid var(--border-bright);
+    border-radius: 8px; min-width: 190px; z-index: 100;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); overflow: hidden;
+  }
+  .nav-dropdown.open { display: block; }
+  .nav-dropdown-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 0.7rem 1rem; font-size: 0.85rem; font-family: 'DM Sans', sans-serif; color: var(--cream); cursor: pointer; transition: background 0.1s; }
+  .nav-dropdown-item:hover { background: rgba(201,168,76,0.08); }
+  .nav-dropdown-sep { height: 1px; background: var(--border); margin: 0.25rem 0; }
+  .nav-dropdown-item.danger { color: var(--red); }
+  .nav-dropdown-item.danger:hover { background: rgba(248,113,113,0.08); }
 
   /* MAIN LAYOUT */
   .container { max-width: 860px; margin: 0 auto; padding: 3rem 2rem 6rem; }
@@ -253,8 +264,6 @@
   @media (max-width: 600px) {
     nav { padding: 0.75rem 1rem; }
     .nav-email { display: none; }
-    .nav-sep { display: none; }
-    .nav-sep:last-of-type { display: inline; }
     .container { padding: 1.5rem 1rem 4rem; }
     .upload-title { font-size: 1.4rem; }
     .drop-zone { padding: 2rem 1rem; }
@@ -306,12 +315,16 @@
   <a href="/" class="nav-logo">Clause<span>Guard</span></a>
   <div class="nav-user" id="navUser" style="display:none;">
     <span class="nav-email" id="navEmail"></span>
-    <span class="nav-sep">·</span>
-    <button class="nav-signout" id="manageSubBtn" onclick="openPortal()" style="display:none;">Manage subscription</button>
-    <span class="nav-sep">·</span>
-    <button class="nav-signout" onclick="handleSignOut()">Sign out</button>
-    <span class="nav-sep">·</span>
-    <button class="nav-signout" onclick="openDeleteModal()" style="color:rgba(248,113,113,0.5); font-size:0.75rem;">Delete account</button>
+    <button class="nav-gear" id="navGearBtn" onclick="toggleDropdown(event)" aria-label="Account menu">⚙</button>
+    <div class="nav-dropdown" id="navDropdown">
+      <button class="nav-dropdown-item" id="manageSubBtn" onclick="closeDropdown(); openPortal();" style="display:none;">Manage subscription</button>
+      <div class="nav-dropdown-sep" id="manageSubSep" style="display:none;"></div>
+      <a class="nav-dropdown-item" id="upgradeBtn" href="/pricing" style="display:none; text-decoration:none;">⬆ Upgrade plan</a>
+      <div class="nav-dropdown-sep" id="upgradeSep" style="display:none;"></div>
+      <button class="nav-dropdown-item" onclick="closeDropdown(); handleSignOut();">Sign out</button>
+      <div class="nav-dropdown-sep"></div>
+      <button class="nav-dropdown-item danger" onclick="closeDropdown(); openDeleteModal();">Delete account</button>
+    </div>
   </div>
   <a href="/" class="nav-back" id="navBack">← Back to home</a>
 </nav>
@@ -422,6 +435,7 @@
     <div class="results-actions">
       <button class="action-btn action-btn-outline" onclick="resetApp()">← Analyze another contract</button>
       <button class="action-btn action-btn-outline" onclick="copyReport()">📋 Copy report</button>
+      <button class="action-btn action-btn-outline" id="shareBtn" onclick="shareAnalysis()" style="display:none;">🔗 Copy share link</button>
       <a href="https://buy.stripe.com/9B69AUdq6dfO0IAgVT2Fa07" class="action-btn action-btn-gold" target="_blank">Upgrade to Pro →</a>
     </div>
 
@@ -443,6 +457,7 @@
   let currentFile = null;
   let currentFilename = 'Pasted text';
   let lastResult = null;
+  let currentShareToken = null;
 
   // ── Auth gate ─────────────────────────────────────────────────────────────
   async function initAuth() {
@@ -512,7 +527,20 @@
 
     document.getElementById('usageIndicator').style.display = 'block';
     document.getElementById('manageSubBtn').style.display = tier === 'free' ? 'none' : '';
+    document.getElementById('manageSubSep').style.display = tier === 'free' ? 'none' : '';
+    const canUpgrade = tier !== 'team';
+    document.getElementById('upgradeBtn').style.display = canUpgrade ? '' : 'none';
+    document.getElementById('upgradeSep').style.display = canUpgrade ? '' : 'none';
   }
+
+  function toggleDropdown(e) {
+    e.stopPropagation();
+    document.getElementById('navDropdown').classList.toggle('open');
+  }
+  function closeDropdown() {
+    document.getElementById('navDropdown').classList.remove('open');
+  }
+  document.addEventListener('click', closeDropdown);
 
   async function openPortal() {
     const btn = document.getElementById('manageSubBtn');
@@ -759,6 +787,7 @@ ACME CORP: ___________________     RECIPIENT: ___________________`;
 
       const result = await res.json();
       lastResult = result;
+      currentShareToken = result._shareToken ?? null;
       loadUsage();
       if (window.posthog) posthog.capture('document_analyzed', { filename: currentFilename, risk_score: result.riskScore });
       showResults(result);
@@ -783,6 +812,10 @@ ACME CORP: ___________________     RECIPIENT: ___________________`;
         View upgrade options →
       </a>`;
     box.classList.add('visible');
+  }
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   function showResults(data) {
@@ -816,11 +849,11 @@ ACME CORP: ___________________     RECIPIENT: ___________________`;
         flagsList.innerHTML += `
           <div class="red-flag" style="--flag-color: ${color}; border-left-color: ${color};">
             <div class="red-flag-header">
-              <span class="red-flag-severity ${isHigh ? 'sev-high' : 'sev-medium'}">${flag.severity}</span>
-              <span class="red-flag-clause">${flag.clause}</span>
+              <span class="red-flag-severity ${isHigh ? 'sev-high' : 'sev-medium'}">${esc(flag.severity)}</span>
+              <span class="red-flag-clause">${esc(flag.clause)}</span>
             </div>
-            <div class="red-flag-issue">${flag.issue}</div>
-            <div class="red-flag-suggestion">${flag.suggestion}</div>
+            <div class="red-flag-issue">${esc(flag.issue)}</div>
+            <div class="red-flag-suggestion">${esc(flag.suggestion)}</div>
           </div>`;
       });
     }
@@ -830,18 +863,19 @@ ACME CORP: ___________________     RECIPIENT: ___________________`;
     (data.keyTerms || []).forEach(term => {
       termsList.innerHTML += `
         <div class="key-term">
-          <div class="key-term-label">${term.label}</div>
-          <div class="key-term-value">${term.value}</div>
+          <div class="key-term-label">${esc(term.label)}</div>
+          <div class="key-term-value">${esc(term.value)}</div>
         </div>`;
     });
 
     const positivesList = document.getElementById('positivesList');
     positivesList.innerHTML = '';
     (data.positives || []).forEach(p => {
-      positivesList.innerHTML += `<div class="positive-item">${p}</div>`;
+      positivesList.innerHTML += `<div class="positive-item">${esc(p)}</div>`;
     });
 
     document.getElementById('sampleCta').style.display = isSampleAnalysis ? 'flex' : 'none';
+    document.getElementById('shareBtn').style.display = (!isSampleAnalysis && currentShareToken) ? '' : 'none';
     document.getElementById('resultsSection').classList.add('visible');
     document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -928,7 +962,7 @@ ACME CORP: ___________________     RECIPIENT: ___________________`;
 
     try {
       let query = sb.from('analyses')
-        .select('id, filename, risk_score, risk_label, summary, result, created_at')
+        .select('id, filename, risk_score, risk_label, summary, result, created_at, share_token')
         .eq('user_id', currentSession.user.id)
         .order('created_at', { ascending: false })
         .limit(100);
@@ -981,9 +1015,24 @@ ACME CORP: ___________________     RECIPIENT: ___________________`;
     if (!item) return;
     currentFilename = item.filename;
     lastResult = item.result;
+    currentShareToken = item.share_token ?? null;
     showView('analyze');
     document.getElementById('uploadSection').style.display = 'none';
     showResults(item.result);
+  }
+
+  function shareAnalysis() {
+    if (!currentShareToken) return;
+    const url = `${location.origin}/share?t=${currentShareToken}`;
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.getElementById('shareBtn');
+      const orig = btn.textContent;
+      btn.textContent = '✓ Link copied!';
+      setTimeout(() => { btn.textContent = orig; }, 2000);
+    }).catch(() => {
+      prompt('Copy this share link:', url);
+    });
+    if (window.posthog) posthog.capture('share_link_copied');
   }
 
   function copyReport() {

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>Pricing — ClauseGuard</title>
+<meta name="description" content="Simple, transparent pricing. Start free with 3 analyses. Upgrade anytime.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #0d1b2a; --navy-mid: #132236; --navy-light: #1c3150;
+    --cream: #f5f0e8; --cream-dark: #e8e0d0;
+    --gold: #c9a84c; --gold-light: #e8c96a;
+    --text-muted: rgba(245,240,232,0.55);
+    --border: rgba(201,168,76,0.2); --border-bright: rgba(201,168,76,0.45);
+    --green: #4ade80;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--navy); color: var(--cream); min-height: 100vh; }
+
+  /* NAV */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem; border-bottom: 1px solid var(--border);
+    background: rgba(13,27,42,0.97); backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; color: var(--cream); text-decoration: none; }
+  .nav-logo span { color: var(--gold); }
+  .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+  .nav-link { font-size: 0.875rem; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+  .nav-link:hover { color: var(--cream); }
+  .nav-cta { background: var(--gold); color: var(--navy); padding: 0.5rem 1.25rem; border-radius: 6px; font-size: 0.875rem; font-weight: 600; text-decoration: none; transition: background 0.2s; }
+  .nav-cta:hover { background: var(--gold-light); }
+  .nav-app { font-size: 0.875rem; color: var(--gold); text-decoration: none; font-weight: 500; transition: color 0.2s; }
+  .nav-app:hover { color: var(--gold-light); }
+
+  /* HERO */
+  .hero { text-align: center; padding: 5rem 2rem 3rem; }
+  .hero-label { display: inline-block; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25); padding: 0.35rem 1rem; border-radius: 20px; margin-bottom: 1.25rem; }
+  .hero h1 { font-family: 'Playfair Display', serif; font-size: 3rem; font-weight: 700; line-height: 1.15; margin-bottom: 1rem; }
+  .hero p { font-size: 1rem; color: var(--text-muted); max-width: 480px; margin: 0 auto; line-height: 1.7; }
+
+  /* TOGGLE */
+  .toggle-wrap { display: flex; justify-content: center; margin: 2.5rem 0 0; }
+  .pricing-toggle { display: inline-flex; align-items: center; gap: 0; background: var(--navy-mid); border: 1px solid var(--border); border-radius: 6px; padding: 4px; }
+  .toggle-btn { padding: 0.45rem 1.25rem; border-radius: 4px; font-size: 0.85rem; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--text-muted); transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+  .toggle-btn.active { background: var(--navy-light); color: var(--cream); }
+  .toggle-save-badge { display: inline-block; background: rgba(39,174,96,0.15); color: var(--green); border: 1px solid rgba(39,174,96,0.3); font-size: 0.68rem; font-weight: 500; letter-spacing: 0.04em; padding: 0.15rem 0.5rem; border-radius: 3px; margin-left: 0.4rem; vertical-align: middle; }
+
+  /* GRID */
+  .pricing-section { max-width: 1000px; margin: 2rem auto 5rem; padding: 0 2rem; }
+  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+  .pricing-card { background: var(--navy-mid); border: 1px solid var(--border); border-radius: 10px; padding: 2rem; display: flex; flex-direction: column; position: relative; transition: border-color 0.2s; }
+  .pricing-card.featured { border-color: var(--gold); background: linear-gradient(160deg, rgba(201,168,76,0.08) 0%, var(--navy-mid) 60%); }
+  .featured-label { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--gold); color: var(--navy); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.3rem 0.9rem; border-radius: 2px; white-space: nowrap; }
+  .plan-name { font-size: 0.78rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem; }
+  .plan-price { font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; color: var(--cream); margin-bottom: 0.25rem; }
+  .plan-price span { font-size: 1rem; color: var(--text-muted); font-family: 'DM Sans', sans-serif; }
+  .plan-desc { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.5rem; min-height: 2.5rem; line-height: 1.5; }
+  .plan-features { list-style: none; margin-bottom: 2rem; flex: 1; }
+  .plan-features li { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.65rem; line-height: 1.4; }
+  .plan-features li::before { content: '✓'; color: var(--gold); font-weight: 600; flex-shrink: 0; }
+  .plan-btn { display: block; text-align: center; padding: 0.85rem; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .plan-btn-outline { border: 1px solid var(--border); color: var(--cream); background: none; }
+  .plan-btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+  .plan-btn-filled { background: var(--gold); color: var(--navy); }
+  .plan-btn-filled:hover { background: var(--gold-light); }
+  .plan-btn-current { background: rgba(201,168,76,0.08); color: var(--gold); border: 1px solid var(--border-bright); cursor: default; }
+
+  /* FREE TIER ROW */
+  .free-row { max-width: 1000px; margin: 0 auto 2rem; padding: 0 2rem; }
+  .free-card { background: var(--navy-mid); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap; }
+  .free-card-left h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .free-card-left p { font-size: 0.85rem; color: var(--text-muted); }
+  .free-price { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 700; color: var(--gold); white-space: nowrap; }
+  .free-price span { font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--text-muted); }
+  .free-features { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+  .free-feature { font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; }
+  .free-feature::before { content: '✓'; color: var(--gold); font-weight: 600; }
+
+  /* FAQ */
+  .faq-section { max-width: 640px; margin: 0 auto 5rem; padding: 0 2rem; }
+  .faq-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; text-align: center; margin-bottom: 2rem; }
+  .faq-item { border-bottom: 1px solid var(--border); padding: 1.25rem 0; }
+  .faq-q { font-size: 0.92rem; font-weight: 500; margin-bottom: 0.6rem; }
+  .faq-a { font-size: 0.85rem; color: var(--text-muted); line-height: 1.7; }
+
+  /* FOOTER */
+  footer { text-align: center; padding: 2rem; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border); }
+  footer a { color: var(--text-muted); text-decoration: none; }
+  footer a:hover { color: var(--gold); }
+
+  @media (max-width: 800px) {
+    .pricing-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 2.2rem; }
+    nav { padding: 0.75rem 1rem; }
+    .free-card { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">Clause<span>Guard</span></a>
+  <div class="nav-links" id="navLinks">
+    <!-- populated by JS -->
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-label">Pricing</div>
+  <h1>Less than one hour<br>of legal fees.</h1>
+  <p>Start free. Upgrade when you need more. Cancel anytime.</p>
+  <div class="toggle-wrap">
+    <div class="pricing-toggle">
+      <button class="toggle-btn active" id="toggleMonthly" onclick="setInterval('monthly')">Monthly</button>
+      <button class="toggle-btn" id="toggleAnnual" onclick="setInterval('annual')">Annual <span class="toggle-save-badge">2 months free</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="pricing-section">
+  <div class="pricing-grid">
+
+    <!-- STARTER -->
+    <div class="pricing-card" id="card-starter">
+      <div class="plan-name">Starter</div>
+      <div class="plan-price" id="price-starter">$29<span>/month</span></div>
+      <div class="plan-desc" id="desc-starter">For freelancers who want peace of mind.</div>
+      <ul class="plan-features">
+        <li>10 contract analyses / month</li>
+        <li>Red flag detection</li>
+        <li>Plain-English summary</li>
+        <li>Key clause extraction</li>
+        <li>Analysis history (90 days)</li>
+        <li>Email support</li>
+      </ul>
+      <a id="btn-starter" href="https://buy.stripe.com/14AcN62LsfnW9f60WV2Fa06" class="plan-btn plan-btn-outline">Get started</a>
+    </div>
+
+    <!-- PRO -->
+    <div class="pricing-card featured" id="card-pro">
+      <div class="featured-label">Most Popular</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-price" id="price-pro">$59<span>/month</span></div>
+      <div class="plan-desc" id="desc-pro">For small businesses reviewing contracts regularly.</div>
+      <ul class="plan-features">
+        <li>50 contract analyses / month</li>
+        <li>Everything in Starter</li>
+        <li>Negotiation counter-language</li>
+        <li>Risk score &amp; comparison</li>
+        <li>Unlimited history</li>
+        <li>Priority support</li>
+      </ul>
+      <a id="btn-pro" href="https://buy.stripe.com/9B69AUdq6dfO0IAgVT2Fa07" class="plan-btn plan-btn-filled">Get started</a>
+    </div>
+
+    <!-- TEAM -->
+    <div class="pricing-card" id="card-team">
+      <div class="plan-name">Team</div>
+      <div class="plan-price" id="price-team">$99<span>/month</span></div>
+      <div class="plan-desc" id="desc-team">For power users with high contract volume.</div>
+      <ul class="plan-features">
+        <li>Unlimited analyses</li>
+        <li>Everything in Pro</li>
+        <li>Dedicated support</li>
+      </ul>
+      <a id="btn-team" href="https://buy.stripe.com/6oU3cweuadfOfDu7lj2Fa08" class="plan-btn plan-btn-outline">Get started</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- FREE TIER -->
+<div class="free-row">
+  <div class="free-card">
+    <div class="free-card-left">
+      <h3>Not ready to commit? Start free.</h3>
+      <p>No credit card required. Includes 3 analyses every month.</p>
+    </div>
+    <div class="free-price">$0 <span>/ month</span></div>
+    <div class="free-features">
+      <span class="free-feature">3 analyses/month</span>
+      <span class="free-feature">Red flag detection</span>
+      <span class="free-feature">Key term extraction</span>
+    </div>
+    <a id="btn-free" href="/login" class="plan-btn plan-btn-outline" style="white-space:nowrap;">Start free →</a>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="faq-section">
+  <h2 class="faq-title">Common questions</h2>
+  <div class="faq-item">
+    <div class="faq-q">Is this legal advice?</div>
+    <div class="faq-a">No. ClauseGuard is an AI tool that flags potential risks in plain English. It's a starting point — always consult a qualified attorney before signing legally binding agreements.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">What counts as one analysis?</div>
+    <div class="faq-a">Each contract you submit counts as one analysis, regardless of length. Your usage resets on the same date each month.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Can I cancel anytime?</div>
+    <div class="faq-a">Yes. Cancel from your account at any time. You'll keep access until the end of your current billing period.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">What types of contracts does it handle?</div>
+    <div class="faq-a">Freelance agreements, service contracts, NDAs, employment offers, vendor agreements, leases — any standard business contract in PDF or text form.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Can I upgrade or downgrade my plan?</div>
+    <div class="faq-a">Yes. You can change your plan anytime from your account settings. Changes take effect immediately.</div>
+  </div>
+</div>
+
+<footer>
+  <p><a href="/">Home</a> &nbsp;·&nbsp; <a href="/privacy">Privacy Policy</a> &nbsp;·&nbsp; <a href="/tos">Terms of Service</a></p>
+  <p style="margin-top:0.75rem;">© 2025 ClauseGuard. Not legal advice.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const TIERS = ['free', 'starter', 'pro', 'team'];
+  const PLANS = ['starter', 'pro', 'team'];
+
+  const pricingData = {
+    monthly: {
+      starter: { display: '$29<span>/month</span>', desc: 'For freelancers who want peace of mind.', url: 'https://buy.stripe.com/14AcN62LsfnW9f60WV2Fa06' },
+      pro:     { display: '$59<span>/month</span>', desc: 'For small businesses reviewing contracts regularly.', url: 'https://buy.stripe.com/9B69AUdq6dfO0IAgVT2Fa07' },
+      team:    { display: '$99<span>/month</span>', desc: 'For power users with high contract volume.', url: 'https://buy.stripe.com/6oU3cweuadfOfDu7lj2Fa08' },
+    },
+    annual: {
+      starter: { display: '$24<span>/mo</span>', desc: 'Billed $290/year — save $58.', url: 'https://buy.stripe.com/eVq3cwadU6Rq76Y8pn2Fa09' },
+      pro:     { display: '$49<span>/mo</span>', desc: 'Billed $590/year — save $118.', url: 'https://buy.stripe.com/5kQbJ2gCi1x60IAeNL2Fa0a' },
+      team:    { display: '$82<span>/mo</span>', desc: 'Billed $990/year — save $198.', url: 'https://buy.stripe.com/28EdRa85Mgs01MEcFD2Fa0b' },
+    }
+  };
+
+  let currentInterval = 'monthly';
+  let userTier = null; // null = not logged in
+
+  function setInterval(interval) {
+    currentInterval = interval;
+    const data = pricingData[interval];
+    PLANS.forEach(plan => {
+      document.getElementById('price-' + plan).innerHTML = data[plan].display;
+      document.getElementById('desc-' + plan).textContent = data[plan].desc;
+      // only update href if not showing "Current plan"
+      const btn = document.getElementById('btn-' + plan);
+      if (!btn.classList.contains('plan-btn-current')) {
+        btn.href = data[plan].url;
+      }
+    });
+    document.getElementById('toggleMonthly').classList.toggle('active', interval === 'monthly');
+    document.getElementById('toggleAnnual').classList.toggle('active', interval === 'annual');
+  }
+
+  function applyAuthState(tier) {
+    userTier = tier;
+    const tierIndex = TIERS.indexOf(tier);
+
+    // Nav
+    const nav = document.getElementById('navLinks');
+    if (tier) {
+      nav.innerHTML = `<a href="/app" class="nav-app">Go to app →</a>`;
+    } else {
+      nav.innerHTML = `
+        <a href="/login" class="nav-link">Log in</a>
+        <a href="/login" class="nav-cta">Start free →</a>`;
+    }
+
+    // Free tier button
+    const freeBtn = document.getElementById('btn-free');
+    if (tier === 'free') {
+      freeBtn.textContent = 'Current plan';
+      freeBtn.classList.add('plan-btn-current');
+      freeBtn.removeAttribute('href');
+    } else if (tier) {
+      freeBtn.textContent = 'Go to app →';
+      freeBtn.href = '/app';
+    }
+
+    // Paid plan buttons
+    PLANS.forEach(plan => {
+      const btn = document.getElementById('btn-' + plan);
+      const planIndex = TIERS.indexOf(plan);
+
+      if (!tier) {
+        // not logged in — default state already set in HTML
+        return;
+      }
+
+      if (plan === tier) {
+        btn.textContent = 'Current plan';
+        btn.classList.remove('plan-btn-outline', 'plan-btn-filled');
+        btn.classList.add('plan-btn-current');
+        btn.removeAttribute('href');
+      } else if (planIndex > tierIndex) {
+        btn.textContent = 'Upgrade →';
+        btn.href = pricingData[currentInterval][plan].url;
+      } else {
+        // lower tier — link to billing portal to downgrade
+        btn.textContent = 'Downgrade';
+        btn.href = '/app'; // portal opens from app
+        btn.classList.remove('plan-btn-filled');
+        btn.classList.add('plan-btn-outline');
+      }
+    });
+  }
+
+  async function init() {
+    try {
+      const cfg = await fetch('/api/config').then(r => r.json());
+      const sb = supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+      const { data: { session } } = await sb.auth.getSession();
+
+      if (session) {
+        const res = await fetch(`${cfg.supabaseUrl}/rest/v1/users?id=eq.${session.user.id}&select=subscription_tier`, {
+          headers: { 'apikey': cfg.supabaseAnonKey, 'Authorization': `Bearer ${session.access_token}` }
+        });
+        const rows = await res.json();
+        applyAuthState(rows[0]?.subscription_tier || 'free');
+      } else {
+        applyAuthState(null);
+      }
+    } catch (e) {
+      applyAuthState(null);
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

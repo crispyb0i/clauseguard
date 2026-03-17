@@ -2,6 +2,8 @@
   "version": 2,
   "routes": [
     { "src": "/app", "dest": "/app.html" },
+    { "src": "/share", "dest": "/share.html" },
+    { "src": "/pricing", "dest": "/pricing.html" },
     { "src": "/login", "dest": "/login.html" },
     { "src": "/reset-password", "dest": "/reset-password.html" },
     { "src": "/privacy", "dest": "/privacy.html" },
