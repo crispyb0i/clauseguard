@@ -38,6 +38,9 @@ export default async function handler(req, res) {
         `https://api.stripe.com/v1/customers?email=${encodeURIComponent(email)}&limit=1`,
         { headers: { 'Authorization': `Bearer ${STRIPE_SECRET_KEY}` } }
       );
+      if (!searchRes.ok) {
+        throw new Error(`Stripe customer lookup failed: ${searchRes.status}`);
+      }
       const searchData = await searchRes.json();
       const customer = searchData.data?.[0];
       if (customer) {
@@ -45,34 +48,49 @@ export default async function handler(req, res) {
           `https://api.stripe.com/v1/subscriptions?customer=${customer.id}&status=active&limit=1`,
           { headers: { 'Authorization': `Bearer ${STRIPE_SECRET_KEY}` } }
         );
+        if (!subsRes.ok) {
+          throw new Error(`Stripe subscription lookup failed: ${subsRes.status}`);
+        }
         const subsData = await subsRes.json();
         const sub = subsData.data?.[0];
         if (sub) {
-          await fetch(`https://api.stripe.com/v1/subscriptions/${sub.id}`, {
+          const cancelRes = await fetch(`https://api.stripe.com/v1/subscriptions/${sub.id}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${STRIPE_SECRET_KEY}` },
           });
+          if (!cancelRes.ok) {
+            throw new Error(`Stripe subscription cancellation failed: ${cancelRes.status}`);
+          }
         }
       }
     }
 
     // 2. Delete analyses
-    await fetch(`${SUPABASE_URL}/rest/v1/analyses?user_id=eq.${userId}`, {
+    const deleteAnalysesRes = await fetch(`${SUPABASE_URL}/rest/v1/analyses?user_id=eq.${userId}`, {
       method: 'DELETE',
       headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` },
     });
+    if (!deleteAnalysesRes.ok) {
+      throw new Error(`Failed to delete analyses: ${deleteAnalysesRes.status}`);
+    }
 
     // 3. Delete user row
-    await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+    const deleteUserRes = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
       method: 'DELETE',
       headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` },
     });
+    if (!deleteUserRes.ok) {
+      throw new Error(`Failed to delete user row: ${deleteUserRes.status}`);
+    }
 
     // 4. Delete auth user (must be last)
-    await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+    const deleteAuthRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
       method: 'DELETE',
       headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` },
     });
+    if (!deleteAuthRes.ok) {
+      throw new Error(`Failed to delete auth user: ${deleteAuthRes.status}`);
+    }
 
     return res.status(200).json({ ok: true });
   } catch (err) {

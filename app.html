@@ -323,6 +323,7 @@
       <div class="nav-dropdown-sep" id="upgradeSep" style="display:none;"></div>
       <button class="nav-dropdown-item" onclick="closeDropdown(); handleSignOut();">Sign out</button>
       <div class="nav-dropdown-sep"></div>
+      <button class="nav-dropdown-item" onclick="closeDropdown(); downloadMyData();">Download my data</button>
       <button class="nav-dropdown-item danger" onclick="closeDropdown(); openDeleteModal();">Delete account</button>
     </div>
   </div>
@@ -436,6 +437,7 @@
       <button class="action-btn action-btn-outline" onclick="resetApp()">← Analyze another contract</button>
       <button class="action-btn action-btn-outline" onclick="copyReport()">📋 Copy report</button>
       <button class="action-btn action-btn-outline" id="shareBtn" onclick="shareAnalysis()" style="display:none;">🔗 Copy share link</button>
+      <button class="action-btn action-btn-outline" id="revokeShareBtn" onclick="revokeShare()" style="display:none; color:#c53030;">✕ Revoke link</button>
       <a href="https://buy.stripe.com/9B69AUdq6dfO0IAgVT2Fa07" class="action-btn action-btn-gold" target="_blank">Upgrade to Pro →</a>
     </div>
 
@@ -875,7 +877,9 @@ ACME CORP: ___________________     RECIPIENT: ___________________`;
     });
 
     document.getElementById('sampleCta').style.display = isSampleAnalysis ? 'flex' : 'none';
-    document.getElementById('shareBtn').style.display = (!isSampleAnalysis && currentShareToken) ? '' : 'none';
+    const showShare = !isSampleAnalysis && !!currentShareToken;
+    document.getElementById('shareBtn').style.display = showShare ? '' : 'none';
+    document.getElementById('revokeShareBtn').style.display = showShare ? '' : 'none';
     document.getElementById('resultsSection').classList.add('visible');
     document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -1035,6 +1039,33 @@ ACME CORP: ___________________     RECIPIENT: ___________________`;
     if (window.posthog) posthog.capture('share_link_copied');
   }
 
+  async function revokeShare() {
+    if (!currentShareToken) return;
+    const btn = document.getElementById('revokeShareBtn');
+    const orig = btn.textContent;
+    btn.textContent = 'Revoking...';
+    btn.disabled = true;
+    try {
+      const r = await fetch('/api/revoke-share', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentSession.access_token}`,
+        },
+        body: JSON.stringify({ token: currentShareToken }),
+      });
+      if (!r.ok) throw new Error('Failed');
+      currentShareToken = null;
+      document.getElementById('shareBtn').style.display = 'none';
+      document.getElementById('revokeShareBtn').style.display = 'none';
+      if (window.posthog) posthog.capture('share_link_revoked');
+    } catch {
+      btn.textContent = orig;
+      btn.disabled = false;
+      showError('Failed to revoke link. Please try again.');
+    }
+  }
+
   function copyReport() {
     if (!lastResult) return;
     const r = lastResult;
@@ -1067,6 +1098,27 @@ ACME CORP: ___________________     RECIPIENT: ___________________`;
       btn.textContent = '✓ Copied!';
       setTimeout(() => btn.textContent = orig, 2000);
     });
+  }
+</script>
+<script>
+  async function downloadMyData() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return window.location.replace('/login');
+    try {
+      const res = await fetch('/api/export-data', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'clauseguard-data-export.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      showError('Failed to export data. Please try again.');
+    }
   }
 </script>
 <!-- DELETE ACCOUNT MODAL -->

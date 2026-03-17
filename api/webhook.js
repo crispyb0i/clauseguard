@@ -12,8 +12,33 @@ async function readRawBody(req) {
   });
 }
 
-// Map Stripe price amount (cents) → subscription tier
-const TIER_BY_AMOUNT = { 2900: 'starter', 5900: 'pro', 9900: 'team' };
+// Map Stripe price IDs → subscription tier.
+// Set STRIPE_PRICE_STARTER, STRIPE_PRICE_PRO, STRIPE_PRICE_TEAM in Vercel env vars.
+// Annual variants use separate price IDs: STRIPE_PRICE_STARTER_ANNUAL, etc.
+function buildTierMap() {
+  const map = {};
+  const pairs = [
+    [process.env.STRIPE_PRICE_STARTER, 'starter'],
+    [process.env.STRIPE_PRICE_STARTER_ANNUAL, 'starter'],
+    [process.env.STRIPE_PRICE_PRO, 'pro'],
+    [process.env.STRIPE_PRICE_PRO_ANNUAL, 'pro'],
+    [process.env.STRIPE_PRICE_TEAM, 'team'],
+    [process.env.STRIPE_PRICE_TEAM_ANNUAL, 'team'],
+  ];
+  for (const [priceId, tier] of pairs) {
+    if (priceId) map[priceId] = tier;
+  }
+  return map;
+}
+const TIER_BY_PRICE_ID = buildTierMap();
+
+async function getSubscriptionPriceId(subscriptionId) {
+  const res = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
+    headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}` },
+  });
+  const sub = await res.json();
+  return sub.items?.data?.[0]?.price?.id || null;
+}
 
 async function getCustomerEmail(customerId) {
   const res = await fetch(`https://api.stripe.com/v1/customers/${customerId}`, {
@@ -88,12 +113,23 @@ export default async function handler(req, res) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const email = session.customer_details?.email || session.customer_email;
-    const tier = TIER_BY_AMOUNT[session.amount_total] || 'starter';
     const today = new Date().toISOString().split('T')[0];
 
     if (!email) {
       console.error('Webhook: no email on session', session.id);
       return res.status(200).json({ received: true });
+    }
+
+    const priceId = session.subscription
+      ? await getSubscriptionPriceId(session.subscription)
+      : null;
+    const tier = (priceId && TIER_BY_PRICE_ID[priceId]) || null;
+
+    if (!tier) {
+      const err = new Error(`Webhook: unrecognized price ID "${priceId}" on session ${session.id} for ${email}`);
+      console.error(err.message);
+      Sentry.captureException(err);
+      return res.status(400).json({ error: 'Unrecognized price ID — webhook will retry.' });
     }
 
     const lookupRes = await fetch(
@@ -143,12 +179,12 @@ export default async function handler(req, res) {
     if (['past_due', 'unpaid', 'canceled'].includes(status)) {
       await patchUser(SUPABASE_URL, SERVICE_KEY, email, { subscription_tier: 'free' });
     } else if (status === 'active' || status === 'trialing') {
-      const amount = subscription.items?.data?.[0]?.price?.unit_amount;
-      const tier = TIER_BY_AMOUNT[amount];
+      const priceId = subscription.items?.data?.[0]?.price?.id;
+      const tier = priceId ? TIER_BY_PRICE_ID[priceId] : undefined;
       if (tier) {
         await patchUser(SUPABASE_URL, SERVICE_KEY, email, { subscription_tier: tier });
       } else {
-        const err = new Error(`Webhook: unrecognized subscription amount ${amount} cents for ${email} (subscription ${subscription.id})`);
+        const err = new Error(`Webhook: unrecognized price ID "${priceId}" for ${email} (subscription ${subscription.id})`);
         console.error(err.message);
         Sentry.captureException(err);
         return res.status(400).json({ error: 'Unrecognized price amount — webhook will retry.' });
