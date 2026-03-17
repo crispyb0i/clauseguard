@@ -328,7 +328,7 @@
     clearAlert(alert);
 
     const { error } = await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://clauseguard.io/login',
+      redirectTo: 'https://clauseguard.io/reset-password',
     });
 
     setLoading(btn, false);

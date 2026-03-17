@@ -223,9 +223,21 @@
   .usage-fill { height: 100%; border-radius: 2px; transition: width 0.3s, background 0.3s; }
 
   @media (max-width: 600px) {
+    nav { padding: 0.75rem 1rem; }
+    .nav-email { display: none; }
+    .nav-sep { display: none; }
+    .nav-sep:last-of-type { display: inline; }
+    .container { padding: 1.5rem 1rem 4rem; }
+    .upload-title { font-size: 1.4rem; }
+    .drop-zone { padding: 2rem 1rem; }
     .key-terms-grid { grid-template-columns: 1fr; }
     .results-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
-    .container { padding: 2rem 1rem 4rem; }
+    .results-actions { flex-direction: column; }
+    .results-actions .action-btn { width: 100%; justify-content: center; }
+    .history-item { padding: 1rem; gap: 0.75rem; }
+    .hist-score { width: 40px; height: 40px; font-size: 0.8rem; }
+    .view-tabs { width: 100%; }
+    .view-tab { flex: 1; text-align: center; }
   }
 
   /* VIEW TABS */
@@ -270,6 +282,8 @@
     <button class="nav-signout" id="manageSubBtn" onclick="openPortal()" style="display:none;">Manage subscription</button>
     <span class="nav-sep">·</span>
     <button class="nav-signout" onclick="handleSignOut()">Sign out</button>
+    <span class="nav-sep">·</span>
+    <button class="nav-signout" onclick="openDeleteModal()" style="color:rgba(248,113,113,0.5); font-size:0.75rem;">Delete account</button>
   </div>
   <a href="/" class="nav-back" id="navBack">← Back to home</a>
 </nav>
@@ -335,10 +349,7 @@
     <div class="spinner"></div>
     <div class="loading-title">Analyzing your contract...</div>
     <div class="loading-steps">
-      <div class="loading-step" id="step1">Reading document structure</div>
-      <div class="loading-step" id="step2">Identifying clause types</div>
-      <div class="loading-step" id="step3">Detecting risk patterns</div>
-      <div class="loading-step" id="step4">Generating recommendations</div>
+      <div class="loading-step active" id="loadingMsg"></div>
     </div>
   </div>
 
@@ -375,7 +386,7 @@
     <div class="results-actions">
       <button class="action-btn action-btn-outline" onclick="resetApp()">← Analyze another contract</button>
       <button class="action-btn action-btn-outline" onclick="copyReport()">📋 Copy report</button>
-      <a href="https://buy.stripe.com/5kQfZicm25Nmcriaxv2Fa04" class="action-btn action-btn-gold" target="_blank">Upgrade to Pro →</a>
+      <a href="https://buy.stripe.com/9B69AUdq6dfO0IAgVT2Fa07" class="action-btn action-btn-gold" target="_blank">Upgrade to Pro →</a>
     </div>
 
   </div>
@@ -468,6 +479,10 @@
   }
 
   async function openPortal() {
+    const btn = document.getElementById('manageSubBtn');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Loading…';
     try {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) return window.location.replace('/login');
@@ -477,13 +492,17 @@
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.error || 'Could not open billing portal. Please contact support.');
+        showError(err.error || 'Could not open billing portal. Please contact support.');
+        btn.disabled = false;
+        btn.textContent = originalText;
         return;
       }
       const { url } = await res.json();
       window.location.href = url;
     } catch (e) {
-      alert('Could not open billing portal. Please contact support.');
+      showError('Could not open billing portal. Please contact support.');
+      btn.disabled = false;
+      btn.textContent = originalText;
     }
   }
 
@@ -519,6 +538,11 @@
   });
 
   function handleFile(file) {
+    const MAX_SIZE_MB = 10;
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      showError(`File too large. Please upload a file under ${MAX_SIZE_MB} MB.`);
+      return;
+    }
     currentFile = file;
     currentFilename = file.name;
     const sizeKb = (file.size / 1024).toFixed(0);
@@ -584,15 +608,23 @@
 
     showLoading();
 
-    const steps = ['step1','step2','step3','step4'];
-    let stepIdx = 0;
+    const loadingMessages = [
+      'Reading the fine print...',
+      'Spotting the sneaky clauses...',
+      'Checking for auto-renewal traps...',
+      'Flagging one-sided liability terms...',
+      'Calculating your risk score...',
+      'Reviewing termination conditions...',
+      'Drafting your negotiation playbook...',
+      'Almost there...',
+    ];
+    let msgIdx = 0;
+    const msgEl = document.getElementById('loadingMsg');
+    msgEl.textContent = loadingMessages[0];
     const stepInterval = setInterval(() => {
-      if (stepIdx > 0) document.getElementById(steps[stepIdx-1]).classList.remove('active');
-      if (stepIdx < steps.length) {
-        document.getElementById(steps[stepIdx]).classList.add('active');
-        stepIdx++;
-      }
-    }, 800);
+      msgIdx = (msgIdx + 1) % loadingMessages.length;
+      msgEl.textContent = loadingMessages[msgIdx];
+    }, 2200);
 
     try {
       // Refresh session to ensure token is current
@@ -600,14 +632,22 @@
       if (!session) { window.location.replace('/login'); return; }
       currentSession = session;
 
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentSession.access_token}`,
-        },
-        body: JSON.stringify({ text, filename: currentFilename }),
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000);
+      let res;
+      try {
+        res = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentSession.access_token}`,
+          },
+          body: JSON.stringify({ text, filename: currentFilename }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       clearInterval(stepInterval);
 
@@ -639,13 +679,17 @@
 
       const result = await res.json();
       lastResult = result;
-      if (window._usage) renderUsage(window._usage.used + 1, window._usage.tier);
+      loadUsage();
       if (window.posthog) posthog.capture('document_analyzed', { filename: currentFilename, risk_score: result.riskScore });
       showResults(result);
     } catch (err) {
       clearInterval(stepInterval);
       hideLoading();
-      showError(err.message);
+      if (err.name === 'AbortError') {
+        showError('Analysis timed out. Your document may be too long — try pasting a shorter section.');
+      } else {
+        showError(err.message);
+      }
     }
   }
 
@@ -725,7 +769,6 @@
     document.getElementById('viewTabs').style.display = 'none';
     document.getElementById('uploadSection').style.display = 'none';
     document.getElementById('loadingSection').classList.add('visible');
-    ['step1','step2','step3','step4'].forEach(s => document.getElementById(s).classList.remove('active'));
   }
 
   function hideLoading() {
@@ -894,6 +937,58 @@
     });
   }
 </script>
+<!-- DELETE ACCOUNT MODAL -->
+<div id="deleteModal" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(13,27,42,0.88); backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:1rem;">
+  <div style="background:var(--navy-mid); border:1px solid rgba(248,113,113,0.3); border-radius:12px; max-width:420px; width:100%; padding:2rem; position:relative;">
+    <h3 style="font-family:'Playfair Display',serif; font-size:1.2rem; margin-bottom:0.5rem; color:var(--cream);">Delete your account?</h3>
+    <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:1.5rem; line-height:1.6;">This will permanently delete all your analyses, cancel any active subscription, and remove your account. <strong style="color:var(--cream);">This cannot be undone.</strong></p>
+    <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+      <button onclick="closeDeleteModal()" style="background:none; border:1px solid var(--border); color:var(--text-muted); padding:0.6rem 1.25rem; border-radius:6px; cursor:pointer; font-size:0.875rem; font-family:'DM Sans',sans-serif;">Cancel</button>
+      <button id="confirmDeleteBtn" onclick="confirmDeleteAccount()" style="background:#ef4444; border:none; color:white; padding:0.6rem 1.25rem; border-radius:6px; cursor:pointer; font-size:0.875rem; font-weight:500; font-family:'DM Sans',sans-serif;">Yes, delete everything</button>
+    </div>
+    <p id="deleteError" style="display:none; font-size:0.82rem; color:var(--red); margin-top:1rem;"></p>
+  </div>
+</div>
+<script>
+  function openDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'flex';
+    document.getElementById('deleteError').style.display = 'none';
+  }
+  function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+  }
+  async function confirmDeleteAccount() {
+    const btn = document.getElementById('confirmDeleteBtn');
+    const errEl = document.getElementById('deleteError');
+    btn.disabled = true;
+    btn.textContent = 'Deleting...';
+    errEl.style.display = 'none';
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return window.location.replace('/login');
+      const res = await fetch('/api/delete-account', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        errEl.textContent = err.error || 'Something went wrong. Please contact support.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Yes, delete everything';
+        return;
+      }
+      await sb.auth.signOut();
+      window.location.replace('/?deleted=1');
+    } catch (e) {
+      errEl.textContent = 'Network error. Please try again.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Yes, delete everything';
+    }
+  }
+</script>
+
 <!-- Cookie consent banner -->
 <div id="cookieBanner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:999; background:var(--navy-mid); border-top:1px solid var(--border); padding:1rem 2rem; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
   <p style="font-size:0.82rem; color:var(--text-muted); margin:0;">We use analytics to improve ClauseGuard. <a href="/privacy" style="color:var(--gold);">Privacy Policy</a></p>

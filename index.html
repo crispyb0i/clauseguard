@@ -5,6 +5,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>ClauseGuard — AI Contract Analysis for Freelancers & Small Businesses</title>
+<meta name="description" content="AI contract analysis for freelancers and small businesses. Detect red flags, extract key terms, and get negotiation suggestions in 30 seconds.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://clauseguard.io/">
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://clauseguard.io/">
+<meta property="og:title" content="ClauseGuard — AI Contract Analysis for Freelancers & Small Businesses">
+<meta property="og:description" content="AI contract analysis for freelancers and small businesses. Detect red flags, extract key terms, and get negotiation suggestions in 30 seconds.">
+<meta property="og:image" content="https://clauseguard.io/og-image.png">
+<meta property="og:site_name" content="ClauseGuard">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ClauseGuard — AI Contract Analysis for Freelancers & Small Businesses">
+<meta name="twitter:description" content="AI contract analysis for freelancers and small businesses. Detect red flags, extract key terms, and get negotiation suggestions in 30 seconds.">
+<meta name="twitter:image" content="https://clauseguard.io/og-image.png">
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "ClauseGuard",
+  "url": "https://clauseguard.io",
+  "description": "AI contract analysis for freelancers and small businesses. Detect red flags, extract key terms, and get negotiation suggestions in 30 seconds.",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
@@ -234,10 +266,32 @@
   .step-title { font-weight: 500; color: var(--cream); margin-bottom: 0.5rem; }
   .step-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.65; }
 
+  /* PRICING TOGGLE */
+  .pricing-toggle {
+    display: inline-flex; align-items: center; gap: 0;
+    background: var(--navy); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px; margin-top: 2rem;
+  }
+  .toggle-btn {
+    padding: 0.45rem 1.25rem; border-radius: 4px;
+    font-size: 0.85rem; font-weight: 500; cursor: pointer;
+    border: none; background: transparent; color: var(--text-muted);
+    transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+  }
+  .toggle-btn.active { background: var(--navy-light); color: var(--cream); }
+  .toggle-save-badge {
+    display: inline-block;
+    background: rgba(39,174,96,0.15); color: #4ade80;
+    border: 1px solid rgba(39,174,96,0.3);
+    font-size: 0.68rem; font-weight: 500; letter-spacing: 0.04em;
+    padding: 0.15rem 0.5rem; border-radius: 3px;
+    margin-left: 0.4rem; vertical-align: middle;
+  }
+
   /* PRICING */
   .pricing-grid {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
-    margin-top: 3rem;
+    margin-top: 1.5rem;
   }
   .pricing-card {
     background: var(--navy-mid); border: 1px solid var(--border);
@@ -650,12 +704,18 @@
     <div class="section-label">Pricing</div>
     <h2>Less than one hour of legal fees.</h2>
     <p class="section-sub">Start with 3 free analyses. Upgrade anytime for unlimited access.</p>
+    <div>
+      <div class="pricing-toggle">
+        <button class="toggle-btn active" id="toggleMonthly" onclick="setPricingInterval('monthly')">Monthly</button>
+        <button class="toggle-btn" id="toggleAnnual" onclick="setPricingInterval('annual')">Annual <span class="toggle-save-badge">2 months free</span></button>
+      </div>
+    </div>
     <div class="pricing-grid">
       <!-- STARTER -->
       <div class="pricing-card">
         <div class="plan-name">Starter</div>
-        <div class="plan-price">$29<span>/month</span></div>
-        <div class="plan-desc">For freelancers who want peace of mind.</div>
+        <div class="plan-price" id="price-starter">$29<span>/month</span></div>
+        <div class="plan-desc" id="desc-starter">For freelancers who want peace of mind.</div>
         <ul class="plan-features">
           <li>10 contract analyses / month</li>
           <li>Red flag detection</li>
@@ -664,14 +724,14 @@
           <li>Analysis history (90 days)</li>
           <li>Email support</li>
         </ul>
-        <a href="https://buy.stripe.com/cNieVe2Ls0t2aja5db2Fa03" class="plan-btn plan-btn-outline">Get started</a>
+        <a id="btn-starter" href="https://buy.stripe.com/14AcN62LsfnW9f60WV2Fa06" class="plan-btn plan-btn-outline">Get started</a>
       </div>
       <!-- PRO -->
       <div class="pricing-card featured">
         <div class="featured-label">Most Popular</div>
         <div class="plan-name">Pro</div>
-        <div class="plan-price">$59<span>/month</span></div>
-        <div class="plan-desc">For small businesses reviewing contracts regularly.</div>
+        <div class="plan-price" id="price-pro">$59<span>/month</span></div>
+        <div class="plan-desc" id="desc-pro">For small businesses reviewing contracts regularly.</div>
         <ul class="plan-features">
           <li>50 contract analyses / month</li>
           <li>Everything in Starter</li>
@@ -680,21 +740,46 @@
           <li>Unlimited history</li>
           <li>Priority support</li>
         </ul>
-        <a href="https://buy.stripe.com/5kQfZicm25Nmcriaxv2Fa04" class="plan-btn plan-btn-filled">Get started</a>
+        <a id="btn-pro" href="https://buy.stripe.com/9B69AUdq6dfO0IAgVT2Fa07" class="plan-btn plan-btn-filled">Get started</a>
       </div>
       <!-- TEAM -->
       <div class="pricing-card">
         <div class="plan-name">Team</div>
-        <div class="plan-price">$99<span>/month</span></div>
-        <div class="plan-desc">For power users with high contract volume.</div>
+        <div class="plan-price" id="price-team">$99<span>/month</span></div>
+        <div class="plan-desc" id="desc-team">For power users with high contract volume.</div>
         <ul class="plan-features">
           <li>Unlimited analyses</li>
           <li>Everything in Pro</li>
           <li>Dedicated support</li>
         </ul>
-        <a href="https://buy.stripe.com/bJefZiadU3Fecri6hf2Fa05" class="plan-btn plan-btn-outline">Get started</a>
+        <a id="btn-team" href="https://buy.stripe.com/6oU3cweuadfOfDu7lj2Fa08" class="plan-btn plan-btn-outline">Get started</a>
       </div>
     </div>
+    <script>
+      const pricingData = {
+        monthly: {
+          starter: { display: '$29<span>/month</span>', desc: 'For freelancers who want peace of mind.', url: 'https://buy.stripe.com/14AcN62LsfnW9f60WV2Fa06' },
+          pro:     { display: '$59<span>/month</span>', desc: 'For small businesses reviewing contracts regularly.', url: 'https://buy.stripe.com/9B69AUdq6dfO0IAgVT2Fa07' },
+          team:    { display: '$99<span>/month</span>', desc: 'For power users with high contract volume.', url: 'https://buy.stripe.com/6oU3cweuadfOfDu7lj2Fa08' },
+        },
+        annual: {
+          starter: { display: '$24<span>/mo</span>', desc: 'Billed $290/year — save $58.', url: 'https://buy.stripe.com/eVq3cwadU6Rq76Y8pn2Fa09' },
+          pro:     { display: '$49<span>/mo</span>', desc: 'Billed $590/year — save $118.', url: 'https://buy.stripe.com/5kQbJ2gCi1x60IAeNL2Fa0a' },
+          team:    { display: '$82<span>/mo</span>', desc: 'Billed $990/year — save $198.', url: 'https://buy.stripe.com/28EdRa85Mgs01MEcFD2Fa0b' },
+        }
+      };
+      function setPricingInterval(interval) {
+        const data = pricingData[interval];
+        ['starter','pro','team'].forEach(plan => {
+          document.getElementById('price-' + plan).innerHTML = data[plan].display;
+          document.getElementById('desc-' + plan).textContent = data[plan].desc;
+          document.getElementById('btn-' + plan).href = data[plan].url;
+        });
+        document.getElementById('toggleMonthly').classList.toggle('active', interval === 'monthly');
+        document.getElementById('toggleAnnual').classList.toggle('active', interval === 'annual');
+        if (window.posthog) posthog.capture('pricing_interval_toggled', { interval });
+      }
+    </script>
   </div>
 </section>
 
@@ -720,6 +805,52 @@
 </footer>
 
 <!-- Cookie consent banner -->
+<!-- EXIT INTENT POPUP -->
+<div id="exitPopup" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(13,27,42,0.85); backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:1rem;">
+  <div style="background:var(--navy-mid); border:1px solid var(--border); border-radius:12px; max-width:480px; width:100%; padding:2.5rem 2rem; position:relative; text-align:center;">
+    <button onclick="closeExitPopup()" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem; line-height:1;">✕</button>
+    <div style="font-size:2rem; margin-bottom:0.75rem;">📋</div>
+    <h3 style="font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; margin-bottom:0.5rem;">Before you go — free checklist</h3>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.5rem;">Get our <strong style="color:var(--cream);">5 Contract Red Flags</strong> checklist — the clauses that cost freelancers the most. Free, no spam.</p>
+    <form id="exitForm" style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:center;" onsubmit="submitExitEmail(event)">
+      <input id="exitEmail" type="email" placeholder="your@email.com" required style="flex:1; min-width:200px; background:var(--navy); border:1px solid var(--border); color:var(--cream); padding:0.6rem 1rem; border-radius:6px; font-size:0.9rem; font-family:'DM Sans',sans-serif; outline:none;">
+      <button type="submit" style="background:var(--gold); border:none; color:var(--navy); padding:0.6rem 1.25rem; border-radius:6px; font-weight:600; font-size:0.9rem; cursor:pointer; font-family:'DM Sans',sans-serif; white-space:nowrap;">Send it →</button>
+    </form>
+    <p id="exitMsg" style="display:none; font-size:0.85rem; color:var(--gold); margin-top:1rem;"></p>
+  </div>
+</div>
+<script>
+  let exitShown = false;
+  function showExitPopup() {
+    if (exitShown || localStorage.getItem('cg_exit_captured')) return;
+    exitShown = true;
+    const el = document.getElementById('exitPopup');
+    el.style.display = 'flex';
+  }
+  function closeExitPopup() {
+    document.getElementById('exitPopup').style.display = 'none';
+  }
+  async function submitExitEmail(e) {
+    e.preventDefault();
+    const email = document.getElementById('exitEmail').value.trim();
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    try {
+      await fetch('/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+    } catch (_) {}
+    localStorage.setItem('cg_exit_captured', '1');
+    document.getElementById('exitForm').style.display = 'none';
+    const msg = document.getElementById('exitMsg');
+    msg.textContent = "You're in! Check your inbox shortly.";
+    msg.style.display = 'block';
+    setTimeout(closeExitPopup, 2500);
+  }
+  document.addEventListener('mouseleave', (e) => {
+    if (e.clientY < 10) showExitPopup();
+  });
+</script>
+
 <div id="cookieBanner" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:999; background:var(--navy-mid); border-top:1px solid var(--border); padding:1rem 2rem; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
   <p style="font-size:0.82rem; color:var(--text-muted); margin:0;">We use analytics to improve ClauseGuard. <a href="/privacy" style="color:var(--gold);">Privacy Policy</a></p>
   <div style="display:flex; gap:0.75rem; flex-shrink:0;">

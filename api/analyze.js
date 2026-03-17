@@ -1,4 +1,5 @@
 import { Sentry } from './_sentry.js';
+import { sendEmail, EMAILS } from './_email.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -182,6 +183,11 @@ positives should list 2-4 things that are standard or favorable.`;
       const match = raw.match(/\{[\s\S]*\}/);
       if (match) result = JSON.parse(match[0]);
       else throw new Error('Could not parse response as JSON');
+    }
+
+    // ── Day 0 welcome email (first analysis only) ─────────────────────────
+    if (analysesUsed === 0 && authUser.email) {
+      sendEmail(EMAILS.welcome(authUser.email)).catch(() => {});
     }
 
     // ── Increment usage ───────────────────────────────────────────────────

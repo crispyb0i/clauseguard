@@ -3,8 +3,12 @@
   "routes": [
     { "src": "/app", "dest": "/app.html" },
     { "src": "/login", "dest": "/login.html" },
+    { "src": "/reset-password", "dest": "/reset-password.html" },
     { "src": "/privacy", "dest": "/privacy.html" },
     { "src": "/tos", "dest": "/tos.html" },
     { "src": "/", "dest": "/index.html" }
+  ],
+  "crons": [
+    { "path": "/api/cron-onboarding", "schedule": "0 10 * * *" }
   ]
 }

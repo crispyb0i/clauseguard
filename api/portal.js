@@ -54,7 +54,7 @@ export default async function handler(req, res) {
     },
     body: new URLSearchParams({
       customer: customer.id,
-      return_url: 'https://www.clauseguard.io/app',
+      return_url: `${process.env.APP_URL || 'https://www.clauseguard.io'}/app`,
     }),
   });
 

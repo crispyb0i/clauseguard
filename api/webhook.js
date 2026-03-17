@@ -108,7 +108,7 @@ export default async function handler(req, res) {
         analyses_used: 0,
         analyses_reset_date: today,
       });
-      console.log(`Upgraded ${email} to ${tier}`);
+      // upgrade logged via Sentry breadcrumb if needed
     } else {
       await fetch(`${SUPABASE_URL}/rest/v1/pending_subscriptions`, {
         method: 'POST',
@@ -120,7 +120,6 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({ email, subscription_tier: tier }),
       });
-      console.log(`Stored pending subscription for ${email} (${tier})`);
     }
   }
 
@@ -130,7 +129,6 @@ export default async function handler(req, res) {
     const email = await getCustomerEmail(subscription.customer);
     if (email) {
       await patchUser(SUPABASE_URL, SERVICE_KEY, email, { subscription_tier: 'free' });
-      console.log(`Downgraded ${email} to free (subscription cancelled)`);
     }
   }
 
@@ -144,13 +142,16 @@ export default async function handler(req, res) {
 
     if (['past_due', 'unpaid', 'canceled'].includes(status)) {
       await patchUser(SUPABASE_URL, SERVICE_KEY, email, { subscription_tier: 'free' });
-      console.log(`Downgraded ${email} to free (status: ${status})`);
-    } else if (status === 'active') {
+    } else if (status === 'active' || status === 'trialing') {
       const amount = subscription.items?.data?.[0]?.price?.unit_amount;
       const tier = TIER_BY_AMOUNT[amount];
       if (tier) {
         await patchUser(SUPABASE_URL, SERVICE_KEY, email, { subscription_tier: tier });
-        console.log(`Updated ${email} to ${tier} (subscription updated)`);
+      } else {
+        const err = new Error(`Webhook: unrecognized subscription amount ${amount} cents for ${email} (subscription ${subscription.id})`);
+        console.error(err.message);
+        Sentry.captureException(err);
+        return res.status(400).json({ error: 'Unrecognized price amount — webhook will retry.' });
       }
     }
   }
