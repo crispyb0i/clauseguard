@@ -348,6 +348,10 @@
   }
   .testimonial-text { font-size: 0.9rem; color: var(--cream); line-height: 1.7; margin-bottom: 1.25rem; font-style: italic; }
   .testimonial-author { display: flex; align-items: center; gap: 0.75rem; }
+  .scenario-persona { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.6rem; }
+  .scenario-flag { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; font-weight: 600; color: #e05252; background: rgba(224,82,82,0.1); border: 1px solid rgba(224,82,82,0.25); border-radius: 4px; padding: 0.25rem 0.6rem; margin-bottom: 1rem; }
+  .scenario-clause { font-size: 0.8rem; color: rgba(237,230,209,0.6); line-height: 1.6; font-style: italic; border-left: 2px solid var(--border); padding-left: 0.75rem; margin-bottom: 1rem; }
+  .scenario-meaning { font-size: 0.85rem; color: var(--cream); line-height: 1.6; }
   .author-avatar {
     width: 36px; height: 36px; border-radius: 50%;
     background: rgba(201,168,76,0.2); border: 1px solid var(--border);
@@ -529,12 +533,12 @@
       <div class="trust-label">Average analysis time</div>
     </div>
     <div class="trust-item">
-      <div class="trust-num">47+</div>
-      <div class="trust-label">Clause types detected</div>
+      <div class="trust-num">Free</div>
+      <div class="trust-label">First contract — no card needed</div>
     </div>
     <div class="trust-item">
-      <div class="trust-num">$400+</div>
-      <div class="trust-label">Avg. lawyer consult saved</div>
+      <div class="trust-num">Private</div>
+      <div class="trust-label">Files never stored after analysis</div>
     </div>
     <div class="trust-item">
       <div class="trust-num">PDF · DOCX · TXT</div>
@@ -671,44 +675,33 @@
   </div>
 </section>
 
-<!-- TESTIMONIALS -->
+<!-- SCENARIOS -->
 <section class="section">
   <div class="section-inner">
-    <div class="section-label">Early users</div>
-    <h2>Stop signing blind.</h2>
-    <p class="section-sub">Freelancers and business owners who now review every contract before signing.</p>
+    <div class="section-label">Common scenarios</div>
+    <h2>These clauses are in more contracts than you'd think.</h2>
+    <p class="section-sub">Real clause patterns that appear in standard freelance and services agreements — and exactly what ClauseGuard would flag.</p>
     <div class="testimonials-grid">
       <div class="testimonial">
-        <div class="testimonial-text">"Caught a worldwide non-compete buried on page 8 of a client contract. My lawyer confirmed it was unenforceable, but I never would have spotted it myself."</div>
-        <div class="testimonial-author">
-          <div class="author-avatar">SK</div>
-          <div>
-            <div class="author-name">Sarah K.</div>
-            <div class="author-role">Freelance UX Designer</div>
-          </div>
-        </div>
+        <div class="scenario-persona">Freelance Designer</div>
+        <div class="scenario-flag">🔴 Non-compete · High risk</div>
+        <div class="scenario-clause">"Consultant agrees not to provide similar services to any entity operating in the same industry for 24 months following termination of this agreement."</div>
+        <div class="scenario-meaning">Buried on page 7. If you sign this, you could be legally barred from working with clients in your own field for two years — even if you walk away first.</div>
       </div>
       <div class="testimonial">
-        <div class="testimonial-text">"We review vendor contracts weekly. ClauseGuard saved us from a 60-day auto-renewal trap that would have locked us in for another year."</div>
-        <div class="testimonial-author">
-          <div class="author-avatar">MR</div>
-          <div>
-            <div class="author-name">Marcus R.</div>
-            <div class="author-role">Founder, 8-person agency</div>
-          </div>
-        </div>
+        <div class="scenario-persona">Independent Developer</div>
+        <div class="scenario-flag">🔴 IP ownership · High risk</div>
+        <div class="scenario-clause">"All work product, tools, frameworks, and methodologies used or developed during this engagement are the exclusive property of Client."</div>
+        <div class="scenario-meaning">The word "used" extends ownership to your existing code libraries and reusable components — not just the deliverables you build for this client.</div>
       </div>
       <div class="testimonial">
-        <div class="testimonial-text">"The negotiation suggestions are the killer feature. I copy the exact counter-language into my reply and the client usually just accepts it."</div>
-        <div class="testimonial-author">
-          <div class="author-avatar">JL</div>
-          <div>
-            <div class="author-name">Jess L.</div>
-            <div class="author-role">Independent Consultant</div>
-          </div>
-        </div>
+        <div class="scenario-persona">Consultant / Agency</div>
+        <div class="scenario-flag">🟡 Auto-renewal · Medium risk</div>
+        <div class="scenario-clause">"This agreement automatically renews for successive 12-month terms unless written notice of non-renewal is provided at least 30 days prior to the renewal date."</div>
+        <div class="scenario-meaning">Miss the window by a week — because you were busy — and you're locked in for another year at the current rate, with no exit until the next cycle.</div>
       </div>
     </div>
+    <p style="text-align:center; margin-top:2rem; font-size:0.85rem; color:rgba(237,230,209,0.5);">These are illustrative examples based on real clause patterns ClauseGuard is designed to detect.</p>
   </div>
 </section>
 
