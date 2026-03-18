@@ -37,6 +37,23 @@
   }
 }
 </script>
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '784084802136499');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=784084802136499&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
@@ -883,7 +900,7 @@
           <li>Analysis history (90 days)</li>
           <li>Email support</li>
         </ul>
-        <a id="btn-starter" href="https://buy.stripe.com/14AcN62LsfnW9f60WV2Fa06" class="plan-btn plan-btn-outline">Get started</a>
+        <a id="btn-starter" href="https://buy.stripe.com/14AcN62LsfnW9f60WV2Fa06" class="plan-btn plan-btn-outline" onclick="if(typeof fbq!=='undefined') fbq('track','InitiateCheckout',{content_name:'Starter',value:29,currency:'USD'});">Get started</a>
       </div>
       <!-- PRO -->
       <div class="pricing-card featured">
@@ -899,7 +916,7 @@
           <li>Unlimited history</li>
           <li>Priority support</li>
         </ul>
-        <a id="btn-pro" href="https://buy.stripe.com/9B69AUdq6dfO0IAgVT2Fa07" class="plan-btn plan-btn-filled">Get started</a>
+        <a id="btn-pro" href="https://buy.stripe.com/9B69AUdq6dfO0IAgVT2Fa07" class="plan-btn plan-btn-filled" onclick="if(typeof fbq!=='undefined') fbq('track','InitiateCheckout',{content_name:'Pro',value:59,currency:'USD'});">Get started</a>
       </div>
       <!-- TEAM -->
       <div class="pricing-card">
@@ -911,7 +928,7 @@
           <li>Everything in Pro</li>
           <li>Dedicated support</li>
         </ul>
-        <a id="btn-team" href="https://buy.stripe.com/6oU3cweuadfOfDu7lj2Fa08" class="plan-btn plan-btn-outline">Get started</a>
+        <a id="btn-team" href="https://buy.stripe.com/6oU3cweuadfOfDu7lj2Fa08" class="plan-btn plan-btn-outline" onclick="if(typeof fbq!=='undefined') fbq('track','InitiateCheckout',{content_name:'Team',value:99,currency:'USD'});">Get started</a>
       </div>
     </div>
     <script>
@@ -997,6 +1014,7 @@
     btn.textContent = 'Sending...';
     try {
       await fetch('/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+      if (typeof fbq !== 'undefined') fbq('track', 'Lead');
     } catch (_) {}
     localStorage.setItem('cg_exit_captured', '1');
     document.getElementById('exitForm').style.display = 'none';
