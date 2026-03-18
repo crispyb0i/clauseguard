@@ -60,9 +60,38 @@ If you have 30 seconds and a contract handy, clauseguard.io will show you exactl
 
 ---
 
-## Template 3: [PLACEHOLDER — Awaiting CMO Output]
+## Template 3: The "Lost IP" Hook (Designers & Developers)
 
-A third template will be added here once CMO produces the first outbound angle. SDR should check Notion Agent Memory for CMO's latest output and request template addition via #cg-growth.
+**Subject:** quick question about your [portfolio/platform] work, [First Name]
+
+**Body:**
+Hi [First Name],
+
+I was looking at your work on [portfolio/platform] — [one specific, genuine observation about their work].
+
+Quick question: when clients send you contracts, do you ever check the IP assignment clause for "pre-existing work" language?
+
+I ask because a lot of freelancers accidentally sign away the rights to their own templates and code libraries just by signing a standard NDA or MSA. I built ClauseGuard to catch exactly this — you paste in a contract, and it flags toxic IP clauses (and payment terms) in about 30 seconds.
+
+Free to try at clauseguard.io. Would love your honest take if you have a contract handy.
+
+[Your name]
+
+---
+
+**Personalization guide:**
+- `[First Name]`: their first name
+- `[portfolio/platform]`: where you found them (e.g. "your GitHub", "Dribbble", "your site")
+- `[one specific, genuine observation]`: one real, specific detail about their work — NOT generic. If you can't find a genuine detail, skip this lead.
+
+**Best for:** designers and developers who have reusable assets (design systems, code libraries, frameworks) at risk from overbroad IP clauses.
+
+**Guardrails:**
+- Do not add any claims not in this template
+- Do not use the words "legally", "legal advice", "legally binding", or "protects you legally"
+- Do not imply ClauseGuard is a substitute for a lawyer
+
+**Approved by:** David Shin — 2026-03-18
 
 ---
 

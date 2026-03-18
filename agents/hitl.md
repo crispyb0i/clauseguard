@@ -24,7 +24,7 @@ These are actions that require David's explicit review or approval before execut
 |---|---|---|
 | First lead batch (10+ leads) reviewed by David | SDR | ⬜ Pending |
 | Outreach domain confirmed live and warmed | SDR | ✅ Cleared 2026-03-18 (Using hello@clauseguard.io on existing Google Workspace — established inbox, SPF/DKIM already configured by Google) |
-| At least 3 approved cold email templates in place | SDR | ✅ Cleared 2026-03-18 (Templates 1 + 2 approved — meets 2-template minimum; Template 3 pending CMO output) |
+| At least 3 approved cold email templates in place | SDR | ✅ Cleared 2026-03-18 (Templates 1, 2, and 3 approved — Template 3: "Lost IP" Hook for designers & developers) |
 | SDR cold email templates approved by David | SDR | ✅ Cleared 2026-03-18 |
 | Customer Voice reply templates approved by David | Customer Voice | ✅ Cleared 2026-03-18 |
 | Monday brief format reviewed and acknowledged by David | Chief of Staff | ⬜ Pending |
