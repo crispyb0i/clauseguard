@@ -453,6 +453,7 @@ src="https://www.facebook.com/tr?id=784084802136499&ev=PageView&noscript=1"
     margin-bottom: 0.25rem;
   }
   .plan-price span { font-size: 1rem; color: var(--text-muted); font-family: 'DM Sans', sans-serif; }
+  .plan-price-original { font-size: 1.1rem; color: var(--text-muted); text-decoration: line-through; margin-right: 0.4rem; font-family: 'DM Sans', sans-serif; opacity: 0.6; }
   .plan-desc { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.5rem; }
   .plan-features { list-style: none; margin-bottom: 2rem; flex: 1; }
   .plan-features li {
@@ -883,7 +884,7 @@ src="https://www.facebook.com/tr?id=784084802136499&ev=PageView&noscript=1"
     <div>
       <div class="pricing-toggle">
         <button class="toggle-btn active" id="toggleMonthly" onclick="setPricingInterval('monthly')">Monthly</button>
-        <button class="toggle-btn" id="toggleAnnual" onclick="setPricingInterval('annual')">Annual <span class="toggle-save-badge">2 months free</span></button>
+        <button class="toggle-btn" id="toggleAnnual" onclick="setPricingInterval('annual')">Annual <span class="toggle-save-badge">Save 17%</span></button>
       </div>
     </div>
     <div class="pricing-grid">
@@ -939,9 +940,9 @@ src="https://www.facebook.com/tr?id=784084802136499&ev=PageView&noscript=1"
           team:    { display: '$99<span>/month</span>', desc: 'For power users with high contract volume.', url: 'https://buy.stripe.com/6oU3cweuadfOfDu7lj2Fa08' },
         },
         annual: {
-          starter: { display: '$24<span>/mo</span>', desc: 'Billed $290/year — save $58.', url: 'https://buy.stripe.com/eVq3cwadU6Rq76Y8pn2Fa09' },
-          pro:     { display: '$49<span>/mo</span>', desc: 'Billed $590/year — save $118.', url: 'https://buy.stripe.com/5kQbJ2gCi1x60IAeNL2Fa0a' },
-          team:    { display: '$82<span>/mo</span>', desc: 'Billed $990/year — save $198.', url: 'https://buy.stripe.com/28EdRa85Mgs01MEcFD2Fa0b' },
+          starter: { display: '<span class="plan-price-original">$29</span>$24<span>/mo</span>', desc: 'Billed $290/year — save $58.', url: 'https://buy.stripe.com/eVq3cwadU6Rq76Y8pn2Fa09' },
+          pro:     { display: '<span class="plan-price-original">$59</span>$49<span>/mo</span>', desc: 'Billed $590/year — save $118.', url: 'https://buy.stripe.com/5kQbJ2gCi1x60IAeNL2Fa0a' },
+          team:    { display: '<span class="plan-price-original">$99</span>$82<span>/mo</span>', desc: 'Billed $990/year — save $198.', url: 'https://buy.stripe.com/28EdRa85Mgs01MEcFD2Fa0b' },
         }
       };
       function setPricingInterval(interval) {
