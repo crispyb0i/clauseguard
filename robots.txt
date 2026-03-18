@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /app
+Disallow: /login
+Disallow: /reset-password
+Disallow: /share
+
+Sitemap: https://clauseguard.io/sitemap.xml

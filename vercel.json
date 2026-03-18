@@ -8,6 +8,10 @@
     { "src": "/reset-password", "dest": "/reset-password.html" },
     { "src": "/privacy", "dest": "/privacy.html" },
     { "src": "/tos", "dest": "/tos.html" },
+    { "src": "/blog", "dest": "/blog/index.html" },
+    { "src": "/blog/freelance-contract-red-flags", "dest": "/blog/freelance-contract-red-flags.html" },
+    { "src": "/blog/non-compete-clause-freelancers", "dest": "/blog/non-compete-clause-freelancers.html" },
+    { "src": "/blog/ip-assignment-clause-freelancers", "dest": "/blog/ip-assignment-clause-freelancers.html" },
     { "src": "/", "dest": "/index.html" }
   ],
   "crons": [
