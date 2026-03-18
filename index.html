@@ -194,6 +194,125 @@
   .flag-text { font-family: 'DM Sans', sans-serif; font-size: 0.78rem; color: var(--text-muted); }
   .flag-text strong { color: var(--cream); font-weight: 500; }
 
+  /* DEMO CAROUSEL */
+  .demo-carousel {
+    position: relative;
+    animation: float 6s ease-in-out infinite;
+  }
+  .demo-p3.doc-card { animation: none; } /* float is on parent */
+
+  .demo-phase {
+    position: absolute; inset: 0;
+    opacity: 0; pointer-events: none;
+  }
+
+  /* 12-second loop — P1: 0-4s, P2: 4.5-7s, P3: 7.5-11s */
+  @keyframes show-p1 {
+    0%   { opacity: 0; }
+    5%   { opacity: 1; }
+    30%  { opacity: 1; }
+    38%  { opacity: 0; }
+    100% { opacity: 0; }
+  }
+  @keyframes show-p2 {
+    0%, 37% { opacity: 0; }
+    43%     { opacity: 1; }
+    57%     { opacity: 1; }
+    64%     { opacity: 0; }
+    100%    { opacity: 0; }
+  }
+  @keyframes show-p3 {
+    0%, 63% { opacity: 0; }
+    70%     { opacity: 1; }
+    91%     { opacity: 1; }
+    98%     { opacity: 0; }
+    100%    { opacity: 0; }
+  }
+  .demo-p1 { animation: show-p1 12s ease-in-out infinite; }
+  .demo-p2 { animation: show-p2 12s ease-in-out infinite; }
+  .demo-p3 { animation: show-p3 12s ease-in-out infinite; }
+
+  /* Drop zone */
+  .demo-drop-zone {
+    width: 100%; height: 100%;
+    border: 1.5px dashed rgba(201,168,76,0.35);
+    border-radius: 8px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 0.4rem;
+    background: rgba(201,168,76,0.03);
+    padding: 2rem;
+    animation: dz-glow 12s ease-in-out infinite;
+  }
+  @keyframes dz-glow {
+    0%, 17%   { border-color: rgba(201,168,76,0.35); background: rgba(201,168,76,0.03); box-shadow: none; }
+    22%, 30%  { border-color: rgba(201,168,76,0.9); background: rgba(201,168,76,0.09); box-shadow: 0 0 24px rgba(201,168,76,0.12); }
+    37%       { border-color: rgba(201,168,76,0.35); background: rgba(201,168,76,0.03); box-shadow: none; }
+    100%      { border-color: rgba(201,168,76,0.35); background: rgba(201,168,76,0.03); box-shadow: none; }
+  }
+  .demo-dz-icon { font-size: 2.2rem; }
+  .demo-dz-title { font-weight: 500; color: var(--cream); font-size: 0.95rem; margin-top: 0.2rem; }
+  .demo-dz-sub { font-size: 0.8rem; color: var(--text-muted); }
+  .demo-dz-formats { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.04em; margin-top: 0.3rem; }
+
+  /* Floating file ghost */
+  .demo-file-ghost {
+    position: absolute;
+    top: -8px; right: 8px;
+    display: flex; align-items: center; gap: 0.45rem;
+    background: var(--navy-mid);
+    border: 1px solid rgba(201,168,76,0.5);
+    border-radius: 6px;
+    padding: 0.45rem 0.75rem;
+    z-index: 3;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+    animation: file-drop 12s ease-in-out infinite;
+  }
+  @keyframes file-drop {
+    0%   { opacity: 0; transform: translateY(-20px) translateX(6px); }
+    5%   { opacity: 1; transform: translateY(-14px) translateX(4px); }
+    14%  { opacity: 1; transform: translateY(-6px) translateX(2px); }
+    27%  { opacity: 1; transform: translateY(110px) translateX(-40px); }
+    32%  { opacity: 0; transform: translateY(118px) translateX(-40px); }
+    100% { opacity: 0; transform: translateY(-20px) translateX(6px); }
+  }
+  .demo-file-label { color: var(--cream); font-family: 'DM Mono', monospace; font-size: 0.72rem; }
+
+  /* Analyzing state */
+  .demo-analyzing {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center;
+    gap: 1.2rem; padding: 2.5rem 2rem;
+    width: 100%; height: 100%;
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .demo-spin {
+    width: 42px; height: 42px;
+    border: 2.5px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: demo-spin 0.85s linear infinite;
+  }
+  @keyframes demo-spin { to { transform: rotate(360deg); } }
+  .demo-analyzing-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem; color: var(--cream);
+  }
+  .demo-steps { display: flex; flex-direction: column; gap: 0.55rem; align-self: stretch; padding: 0 0.25rem; }
+  .demo-step { font-size: 0.8rem; color: var(--text-muted); opacity: 0; }
+  @keyframes step-in {
+    0%, 39%  { opacity: 0; transform: translateX(-5px); }
+    47%      { opacity: 1; transform: translateX(0); color: #c9a84c; }
+    57%      { opacity: 1; transform: translateX(0); color: rgba(245,240,232,0.55); }
+    64%      { opacity: 0; }
+    100%     { opacity: 0; }
+  }
+  .ds1 { animation: step-in 12s ease-in-out infinite; }
+  .ds2 { animation: step-in 12s ease-in-out infinite; animation-delay: 0.7s; }
+  .ds3 { animation: step-in 12s ease-in-out infinite; animation-delay: 1.4s; }
+
   /* TRUST BAR */
   .trust-bar {
     border-top: 1px solid var(--border);
@@ -495,33 +614,65 @@
       </div>
     </div>
 
-    <!-- MOCK DOC CARD -->
-    <div class="doc-card fade-up fade-up-2">
-      <div class="doc-header">
-        <span class="doc-title">Freelance Services Agreement.pdf</span>
-        <span class="doc-badge">Analyzed</span>
-      </div>
-      <div class="doc-line">WHEREAS, Client desires to retain Contractor...</div>
-      <div class="doc-line highlight">§ 4.2 — Intellectual Property Assignment</div>
-      <div class="doc-line red">§ 7.1 — Non-compete: 24 months, worldwide ⚠</div>
-      <div class="doc-line">§ 9.3 — Limitation of Liability: $500 cap</div>
-      <div class="doc-line red">§ 11.2 — Unilateral termination, 0 days notice ⚠</div>
-      <div class="doc-line">§ 14.0 — Governing Law: Delaware</div>
-      <div class="analysis-panel">
-        <div class="analysis-panel-title">⚡ ClauseGuard Analysis</div>
-        <div class="flag">
-          <span class="flag-icon">🔴</span>
-          <span class="flag-text"><strong>High risk:</strong> Worldwide non-compete is unenforceable in most states — request removal</span>
+    <!-- HERO DEMO CAROUSEL -->
+    <div class="demo-carousel fade-up fade-up-2">
+
+      <!-- Phase 1: Drop zone with floating file -->
+      <div class="demo-phase demo-p1">
+        <div class="demo-file-ghost">
+          <span>📕</span>
+          <span class="demo-file-label">NDA_Final.pdf</span>
         </div>
-        <div class="flag">
-          <span class="flag-icon">🟡</span>
-          <span class="flag-text"><strong>Negotiate:</strong> $500 liability cap is far below typical project value</span>
-        </div>
-        <div class="flag">
-          <span class="flag-icon">✅</span>
-          <span class="flag-text"><strong>Standard:</strong> IP assignment, payment terms, and governing law look typical</span>
+        <div class="demo-drop-zone">
+          <div class="demo-dz-icon">📂</div>
+          <div class="demo-dz-title">Drop your contract here</div>
+          <div class="demo-dz-sub">or click to browse files</div>
+          <div class="demo-dz-formats">PDF · DOCX · TXT</div>
         </div>
       </div>
+
+      <!-- Phase 2: Analyzing -->
+      <div class="demo-phase demo-p2">
+        <div class="demo-analyzing">
+          <div class="demo-spin"></div>
+          <div class="demo-analyzing-title">Analyzing contract...</div>
+          <div class="demo-steps">
+            <div class="demo-step ds1">✓ Extracting clauses</div>
+            <div class="demo-step ds2">✓ Identifying red flags</div>
+            <div class="demo-step ds3">→ Calculating risk score</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 3: Results -->
+      <div class="demo-p3 doc-card">
+        <div class="doc-header">
+          <span class="doc-title">Freelance Services Agreement.pdf</span>
+          <span class="doc-badge">Analyzed</span>
+        </div>
+        <div class="doc-line">WHEREAS, Client desires to retain Contractor...</div>
+        <div class="doc-line highlight">§ 4.2 — Intellectual Property Assignment</div>
+        <div class="doc-line red">§ 7.1 — Non-compete: 24 months, worldwide ⚠</div>
+        <div class="doc-line">§ 9.3 — Limitation of Liability: $500 cap</div>
+        <div class="doc-line red">§ 11.2 — Unilateral termination, 0 days notice ⚠</div>
+        <div class="doc-line">§ 14.0 — Governing Law: Delaware</div>
+        <div class="analysis-panel">
+          <div class="analysis-panel-title">⚡ ClauseGuard Analysis</div>
+          <div class="flag">
+            <span class="flag-icon">🔴</span>
+            <span class="flag-text"><strong>High risk:</strong> Worldwide non-compete is unenforceable in most states — request removal</span>
+          </div>
+          <div class="flag">
+            <span class="flag-icon">🟡</span>
+            <span class="flag-text"><strong>Negotiate:</strong> $500 liability cap is far below typical project value</span>
+          </div>
+          <div class="flag">
+            <span class="flag-icon">✅</span>
+            <span class="flag-text"><strong>Standard:</strong> IP assignment, payment terms, and governing law look typical</span>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
