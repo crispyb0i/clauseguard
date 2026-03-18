@@ -23,7 +23,8 @@ These are actions that require David's explicit review or approval before execut
 | Gate | Agent | Status |
 |---|---|---|
 | First lead batch (10+ leads) reviewed by David | SDR | ⬜ Pending |
-| Outreach domain confirmed live and warmed | SDR | ✅ Cleared 2026-03-18 (Using hello@clauseguard.io on existing Google Workspace — established inbox, SPF/DKIM already configured by Google) |
+| Dedicated outreach domain registered with SPF/DKIM/DMARC | SDR | ✅ Cleared 2026-03-18 (getclauseguard.io — registered on Namecheap, added to Google Workspace, SPF/DKIM/DMARC configured) |
+| Outreach domain warmed (minimum 2 weeks) | SDR | ⬜ In progress — warming started 2026-03-18, sends unblocked ~2026-04-01. Week 1: 5/day to warm contacts. Week 2: 10/day. Full cap (20/day) from April 1. |
 | At least 3 approved cold email templates in place | SDR | ✅ Cleared 2026-03-18 (Templates 1, 2, and 3 approved — Template 3: "Lost IP" Hook for designers & developers) |
 | SDR cold email templates approved by David | SDR | ✅ Cleared 2026-03-18 |
 | Customer Voice reply templates approved by David | Customer Voice | ✅ Cleared 2026-03-18 |

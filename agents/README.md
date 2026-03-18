@@ -73,7 +73,8 @@ See `agents/hitl.md` for the full list of actions requiring David's review befor
 ## Known Infrastructure Constraints
 
 - **Cowork must be open and running** for scheduled tasks to fire. Tasks are local to the machine, not server-side — they queue and run on next app launch if Cowork was closed. Workaround: keep laptop open and plugged in with display sleep allowed, or leave a dedicated machine running Cowork.
-- **Sending domain:** hello@clauseguard.io (Google Workspace). No separate outreach domain. Keep daily SDR send volume low (<20/day) to protect domain reputation.
+- **Outreach domain:** hello@getclauseguard.io (Google Workspace, Namecheap DNS, SPF/DKIM/DMARC configured 2026-03-18). Domain warming started 2026-03-18 — SDR sends unblocked ~2026-04-01. Cap: 5/day weeks 1–2, 10/day week 3, 20/day from April 1.
+- **Primary domain:** hello@clauseguard.io — support and transactional only. Never used for cold outreach.
 
 ## System Status (last updated 2026-03-18)
 

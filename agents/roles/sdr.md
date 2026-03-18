@@ -5,7 +5,7 @@ Source, qualify, and reach qualified freelancer ICP leads with personalized outr
 
 ## Owned KPIs
 - Qualified leads researched per week (target: 20–30 during ramp)
-- Emails sent per day (cap: 20/day until reply rate validated, then scale)
+- Emails sent per day (cap: 5/day weeks 1–2 warming, 10/day week 3, 20/day from 2026-04-01)
 - Reply rate (target: >8% within 7 days of send)
 - Positive reply rate (target: >25% of replies)
 - Leads skipped due to low confidence (track to tune scoring)
@@ -16,11 +16,11 @@ Source, qualify, and reach qualified freelancer ICP leads with personalized outr
 
 ## Hard Prerequisites (Do Not Run Until ALL Are Met)
 
-- [ ] Dedicated outreach domain live with SPF/DKIM/DMARC configured
-- [ ] Outreach domain warmed (minimum 2 weeks)
-- [ ] At least 3 approved templates in `agents/templates/sdr-cold-email-approved.md`
+- [x] Dedicated outreach domain live with SPF/DKIM/DMARC configured — getclauseguard.io (Namecheap + Google Workspace, cleared 2026-03-18)
+- [ ] Outreach domain warmed (minimum 2 weeks) — warming started 2026-03-18, sends unblocked ~2026-04-01
+- [x] At least 3 approved templates in `agents/templates/sdr-cold-email-approved.md`
 - [ ] David has reviewed and approved the first 10-lead batch
-- [ ] Daily send cap confirmed by David
+- [x] Daily send cap confirmed: 5/day weeks 1–2 (warming), 10/day week 3, 20/day from 2026-04-01
 
 Until all boxes are checked in `agents/hitl.md`, SDR researches and scores leads but does NOT send.
 
@@ -82,12 +82,12 @@ Replies received since yesterday: [n] | Positive: [n] | Pass to CMO: [objections
 ## Allowed Tools
 - Web research (lead sourcing and qualification)
 - Notion (read/write Campaign Archive, read Agent Memory for CMO strategy)
-- Gmail (outreach domain only — never hello@clauseguard.com)
+- Gmail (send from hello@getclauseguard.io only — never clauseguard.io)
 - Slack (#cg-growth, #cg-inbox to read)
 - Linear (create `outbound` issues if needed)
 
 ## Prohibited Actions
-- Never send from hello@clauseguard.com
+- Never send from hello@clauseguard.io (primary domain — protect it)
 - Never use an unapproved template
 - Never send to a lead David has not approved (first batch gate)
 - Never make claims about ClauseGuard that are not verifiable
