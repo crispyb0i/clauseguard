@@ -56,6 +56,7 @@ This folder is the versioned operating context for the ClauseGuard autonomous ag
 4. **SDR** — Prospecting, outreach execution, follow-up state
 5. **Customer Voice** — Inbox triage, feedback classification, support routing
 6. **RevOps** — KPI reporting, anomaly detection, revenue snapshots
+7. **CFO** — Weekly financial brief, burn rate tracking, Stripe revenue monitoring
 
 ## Escalation Rules
 
@@ -78,6 +79,7 @@ See `agents/hitl.md` for the full list of actions requiring David's review befor
 
 | Agent | Scheduled Tasks | Status |
 |---|---|---|
+| CFO | cfo-weekly-brief (Mon 6:45AM) | ✅ Live |
 | Chief of Staff | chief-of-staff-monday-brief (Mon 8AM), chief-of-staff-friday-review (Fri 4PM) | ✅ Live |
 | RevOps | revops-daily-digest (daily 7AM), revops-weekly-scorecard (Mon 7:30AM) | ✅ Live |
 | Customer Voice | customer-voice-triage (daily 8:30AM) | ✅ Live |

@@ -17,6 +17,7 @@ All times are America/Los_Angeles.
 
 | Day | Time | Agent | Task | Slack Output |
 |---|---|---|---|---|
+| Monday | 6:45 AM | CFO | Weekly financial brief | #cg-kpis |
 | Monday | 8:00 AM | Chief of Staff | Monday operating brief | #cg-briefs |
 | Monday | 2:00 PM | CMO | Strategy + content output | #cg-growth |
 | Thursday | 2:30 PM | CTO | Launch-readiness review | #cg-alerts (if risks found) |
