@@ -5,10 +5,14 @@ const PASSWORD = process.env.TEST_PASSWORD;
 
 async function signIn(page) {
   await page.goto('/login');
+  await page.waitForFunction(() => {
+    const card = document.getElementById('card');
+    return card && card.style.opacity === '1';
+  }, { timeout: 15000 });
   await page.locator('#signinEmail').fill(EMAIL);
   await page.locator('#signinPassword').fill(PASSWORD);
   await page.locator('#signinBtn').click();
-  await expect(page).toHaveURL(/\/app/, { timeout: 10000 });
+  await expect(page).toHaveURL(/\/app/, { timeout: 15000 });
 }
 
 test.describe('Analysis flow', () => {

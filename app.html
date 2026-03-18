@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -348,7 +349,7 @@
   <!-- UPLOAD SECTION -->
   <div class="upload-section" id="uploadSection">
     <h1 class="upload-title">Analyze your contract</h1>
-    <p class="upload-sub">Upload a PDF or Word doc, or paste the contract text below. Your analysis will be ready in seconds.</p>
+    <p class="upload-sub">Upload a PDF or Word document (.docx), or paste the contract text below. Your analysis will be ready in seconds.</p>
 
     <div class="usage-indicator" id="usageIndicator" style="display:none;">
       <div class="usage-text">
@@ -640,8 +641,17 @@
       return text;
     }
 
-    if (ext === 'doc' || ext === 'docx') {
-      throw new Error('For Word documents, please copy and paste the text directly into the text box below.');
+    if (ext === 'docx') {
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      if (!result.value || result.value.trim().length < 10) {
+        throw new Error('Could not extract text from this Word document. Please paste the contract text directly.');
+      }
+      return result.value;
+    }
+
+    if (ext === 'doc') {
+      throw new Error('Legacy .doc files are not supported. Please save as .docx and re-upload, or paste the text directly.');
     }
 
     return await file.text();

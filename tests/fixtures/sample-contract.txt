@@ -1,0 +1,21 @@
+CONSULTING AGREEMENT
+
+This Consulting Agreement ("Agreement") is entered into as of January 1, 2026, between Acme Corp ("Client") and Jane Doe ("Consultant").
+
+1. SERVICES
+Consultant agrees to provide software development services as requested by Client.
+
+2. PAYMENT
+Client shall pay Consultant $150 per hour, invoiced monthly, due within 30 days.
+
+3. NON-COMPETE
+During the term and for 24 months thereafter, Consultant shall not compete with Client in any capacity worldwide.
+
+4. INTELLECTUAL PROPERTY
+All work product created during this engagement is assigned to Client exclusively.
+
+5. TERMINATION
+Either party may terminate this agreement with 30 days written notice.
+
+6. GOVERNING LAW
+This Agreement is governed by the laws of California.
