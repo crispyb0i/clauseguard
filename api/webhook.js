@@ -49,15 +49,19 @@ async function getCustomerEmail(customerId) {
 }
 
 async function patchUser(supabaseUrl, serviceKey, email, fields) {
-  await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
+  const res = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
     method: 'PATCH',
     headers: {
       'apikey': serviceKey,
       'Authorization': `Bearer ${serviceKey}`,
       'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
     },
     body: JSON.stringify(fields),
   });
+  const body = await res.json().catch(() => null);
+  console.log(`patchUser ${email}: status=${res.status} rows=${Array.isArray(body) ? body.length : 0} body=${JSON.stringify(body)}`);
+  return body;
 }
 
 export default async function handler(req, res) {
@@ -138,14 +142,16 @@ export default async function handler(req, res) {
     );
     const users = await lookupRes.json();
 
+    console.log(`checkout.session.completed: email=${email} priceId=${priceId} tier=${tier} usersFound=${Array.isArray(users) ? users.length : 'error'}`);
+
     if (Array.isArray(users) && users.length > 0) {
       await patchUser(SUPABASE_URL, SERVICE_KEY, email, {
         subscription_tier: tier,
         analyses_used: 0,
         analyses_reset_date: today,
       });
-      // upgrade logged via Sentry breadcrumb if needed
     } else {
+      console.log(`checkout.session.completed: user not found for ${email}, adding to pending_subscriptions`);
       await fetch(`${SUPABASE_URL}/rest/v1/pending_subscriptions`, {
         method: 'POST',
         headers: {
