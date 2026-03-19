@@ -13,11 +13,7 @@ export async function sendEmail({ to, subject, html }) {
     body: JSON.stringify({ from: FROM, to, subject, html }),
   });
   const body = await res.text();
-  if (!res.ok) {
-    console.error('Resend error', res.status, body);
-  } else {
-    console.log('Resend ok', res.status, body);
-  }
+  return { status: res.status, body };
 }
 
 export const EMAILS = {
