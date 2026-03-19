@@ -262,6 +262,23 @@
   .usage-track { height: 3px; background: rgba(201,168,76,0.12); border-radius: 2px; }
   .usage-fill { height: 100%; border-radius: 2px; transition: width 0.3s, background 0.3s; }
 
+  .limit-banner {
+    display: none;
+    background: rgba(248,113,113,0.08);
+    border: 1px solid rgba(248,113,113,0.3);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  .limit-banner h3 { font-size: 1rem; font-weight: 600; color: var(--cream); margin-bottom: 0.35rem; }
+  .limit-banner p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; }
+  .limit-banner a { display: inline-block; background: var(--gold); color: var(--navy); padding: 0.6rem 1.5rem; border-radius: 5px; font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+  .limit-banner a:hover { background: var(--gold-light); }
+  .drop-zone.locked { opacity: 0.3; pointer-events: none; }
+  textarea.locked { opacity: 0.3; pointer-events: none; cursor: not-allowed; resize: none; }
+  .sample-btn.locked { opacity: 0.3; pointer-events: none; cursor: not-allowed; }
+
   @media (max-width: 600px) {
     nav { padding: 0.75rem 1rem; }
     .nav-email { display: none; }
@@ -357,6 +374,12 @@
         <a href="/#pricing" id="usageUpgradeLink" style="display:none;">Upgrade →</a>
       </div>
       <div class="usage-track"><div class="usage-fill" id="usageFill"></div></div>
+    </div>
+
+    <div class="limit-banner" id="limitBanner">
+      <h3>You've used all your analyses this month</h3>
+      <p>Upgrade to keep reviewing contracts without interruption.</p>
+      <a href="/pricing">View upgrade options →</a>
     </div>
 
     <div class="file-preview" id="filePreview">
@@ -534,6 +557,14 @@
     const canUpgrade = tier !== 'team';
     document.getElementById('upgradeBtn').style.display = canUpgrade ? '' : 'none';
     document.getElementById('upgradeSep').style.display = canUpgrade ? '' : 'none';
+
+    if (used >= limit) {
+      document.getElementById('limitBanner').style.display = 'block';
+      document.getElementById('dropZone').classList.add('locked');
+      document.getElementById('contractText').classList.add('locked');
+      document.querySelector('.sample-btn').classList.add('locked');
+      document.getElementById('analyzeBtn').disabled = true;
+    }
   }
 
   function toggleDropdown(e) {
