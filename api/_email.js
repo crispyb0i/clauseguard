@@ -12,9 +12,11 @@ export async function sendEmail({ to, subject, html }) {
     headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ from: FROM, to, subject, html }),
   });
+  const body = await res.text();
   if (!res.ok) {
-    const err = await res.text();
-    console.error('Resend error:', err);
+    console.error('Resend error', res.status, body);
+  } else {
+    console.log('Resend ok', res.status, body);
   }
 }
 
