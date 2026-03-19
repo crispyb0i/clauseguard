@@ -48,8 +48,18 @@ async function getCustomerEmail(customerId) {
   return customer.email || null;
 }
 
-async function patchUser(supabaseUrl, serviceKey, email, fields) {
-  const res = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
+async function lookupUserByEmail(supabaseUrl, serviceKey, email) {
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=id`,
+    { headers: { 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}` } }
+  );
+  const rows = await res.json().catch(() => []);
+  console.log(`lookupUserByEmail ${email}: status=${res.status} found=${Array.isArray(rows) ? rows.length : 'error'}`);
+  return Array.isArray(rows) && rows.length > 0 ? rows[0].id : null;
+}
+
+async function patchUserById(supabaseUrl, serviceKey, userId, fields) {
+  const res = await fetch(`${supabaseUrl}/rest/v1/users?id=eq.${userId}`, {
     method: 'PATCH',
     headers: {
       'apikey': serviceKey,
@@ -60,7 +70,7 @@ async function patchUser(supabaseUrl, serviceKey, email, fields) {
     body: JSON.stringify(fields),
   });
   const body = await res.json().catch(() => null);
-  console.log(`patchUser ${email}: status=${res.status} rows=${Array.isArray(body) ? body.length : 0} body=${JSON.stringify(body)}`);
+  console.log(`patchUserById ${userId}: status=${res.status} rows=${Array.isArray(body) ? body.length : 0}`);
   return body;
 }
 
@@ -136,16 +146,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Unrecognized price ID — webhook will retry.' });
     }
 
-    const lookupRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=id`,
-      { headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` } }
-    );
-    const users = await lookupRes.json();
+    console.log(`checkout.session.completed: email=${email} priceId=${priceId} tier=${tier}`);
+    const userId = await lookupUserByEmail(SUPABASE_URL, SERVICE_KEY, email);
 
-    console.log(`checkout.session.completed: email=${email} priceId=${priceId} tier=${tier} usersFound=${Array.isArray(users) ? users.length : 'error'}`);
-
-    if (Array.isArray(users) && users.length > 0) {
-      await patchUser(SUPABASE_URL, SERVICE_KEY, email, {
+    if (userId) {
+      await patchUserById(SUPABASE_URL, SERVICE_KEY, userId, {
         subscription_tier: tier,
         analyses_used: 0,
         analyses_reset_date: today,
@@ -170,7 +175,8 @@ export default async function handler(req, res) {
     const subscription = event.data.object;
     const email = await getCustomerEmail(subscription.customer);
     if (email) {
-      await patchUser(SUPABASE_URL, SERVICE_KEY, email, { subscription_tier: 'free' });
+      const userId = await lookupUserByEmail(SUPABASE_URL, SERVICE_KEY, email);
+      if (userId) await patchUserById(SUPABASE_URL, SERVICE_KEY, userId, { subscription_tier: 'free' });
     }
   }
 
@@ -180,15 +186,16 @@ export default async function handler(req, res) {
     const email = await getCustomerEmail(subscription.customer);
     if (!email) return res.status(200).json({ received: true });
 
+    const userId = await lookupUserByEmail(SUPABASE_URL, SERVICE_KEY, email);
     const { status } = subscription;
 
     if (['past_due', 'unpaid', 'canceled'].includes(status)) {
-      await patchUser(SUPABASE_URL, SERVICE_KEY, email, { subscription_tier: 'free' });
+      if (userId) await patchUserById(SUPABASE_URL, SERVICE_KEY, userId, { subscription_tier: 'free' });
     } else if (status === 'active' || status === 'trialing') {
       const priceId = subscription.items?.data?.[0]?.price?.id;
       const tier = priceId ? TIER_BY_PRICE_ID[priceId] : undefined;
       if (tier) {
-        await patchUser(SUPABASE_URL, SERVICE_KEY, email, { subscription_tier: tier });
+        if (userId) await patchUserById(SUPABASE_URL, SERVICE_KEY, userId, { subscription_tier: tier });
       } else {
         const err = new Error(`Webhook: unrecognized price ID "${priceId}" for ${email} (subscription ${subscription.id})`);
         console.error(err.message);
