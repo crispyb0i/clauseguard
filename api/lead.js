@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Failed to save email.' });
   }
 
-  const emailResult = await sendEmail(EMAILS.checklist(email)).catch((err) => ({ error: err.message }));
+  sendEmail(EMAILS.checklist(email)).catch(() => {});
 
-  return res.status(200).json({ ok: true, emailResult });
+  return res.status(200).json({ ok: true });
 }

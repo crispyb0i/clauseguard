@@ -12,8 +12,10 @@ export async function sendEmail({ to, subject, html }) {
     headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ from: FROM, to, subject, html }),
   });
-  const body = await res.text();
-  return { status: res.status, body };
+  if (!res.ok) {
+    const err = await res.text();
+    console.error('Resend error:', err);
+  }
 }
 
 export const EMAILS = {
