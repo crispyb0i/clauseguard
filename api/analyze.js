@@ -228,8 +228,9 @@ positives should list 2-4 things that are standard or favorable.`;
 
     const saved = saveRes.ok ? await saveRes.json() : [];
     const shareToken = saved[0]?.share_token ?? null;
+    const analysisId = saved[0]?.id ?? null;
 
-    return res.status(200).json({ ...result, _shareToken: shareToken });
+    return res.status(200).json({ ...result, _shareToken: shareToken, _analysisId: analysisId });
   } catch (err) {
     Sentry.captureException(err);
     console.error('Handler error:', err);

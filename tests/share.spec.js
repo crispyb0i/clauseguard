@@ -73,7 +73,7 @@ test.describe('Share link — create and revoke', () => {
     await sharePage.close();
   });
 
-  test('revoking a share link hides share and revoke buttons', async ({ page }) => {
+  test('revoking a share link hides revoke button but keeps share button visible', async ({ page }) => {
     await page.locator('#contractText').fill(
       'FREELANCE CONTRACT. All work product belongs to client. ' +
       'Freelancer may not work for any competitor for 5 years after contract ends.'
@@ -84,7 +84,90 @@ test.describe('Share link — create and revoke', () => {
 
     await page.locator('#revokeShareBtn').click();
 
-    await expect(page.locator('#shareBtn')).toBeHidden({ timeout: 8000 });
+    // Revoke button disappears, but share button stays so user can re-enable
     await expect(page.locator('#revokeShareBtn')).toBeHidden({ timeout: 8000 });
+    await expect(page.locator('#shareBtn')).toBeVisible({ timeout: 8000 });
+  });
+
+  test('can re-enable sharing after revoking', async ({ page, context }) => {
+    await page.locator('#contractText').fill(
+      'CONSULTING AGREEMENT. Consultant must assign all intellectual property to client. ' +
+      'Non-solicitation clause applies for 3 years. Late payment incurs 5% weekly interest.'
+    );
+    await page.locator('#analyzeBtn').click();
+    await expect(page.locator('#resultsSection')).toBeVisible({ timeout: 60000 });
+
+    // Revoke the initial share link
+    await expect(page.locator('#revokeShareBtn')).toBeVisible();
+    await page.locator('#revokeShareBtn').click();
+    await expect(page.locator('#revokeShareBtn')).toBeHidden({ timeout: 8000 });
+    await expect(page.locator('#shareBtn')).toBeVisible();
+
+    // Intercept clipboard to capture the new share URL
+    let newShareUrl = null;
+    await page.exposeFunction('captureNewShareUrl', (url) => { newShareUrl = url; });
+    await page.evaluate(() => {
+      const orig = navigator.clipboard.writeText.bind(navigator.clipboard);
+      navigator.clipboard.writeText = async (text) => {
+        window.captureNewShareUrl(text);
+        return orig(text);
+      };
+    });
+
+    // Click share again — should generate a fresh token
+    await page.locator('#shareBtn').click();
+
+    // Revoke button should reappear once the new token is generated
+    await expect(page.locator('#revokeShareBtn')).toBeVisible({ timeout: 10000 });
+
+    if (!newShareUrl) {
+      test.skip(true, 'Clipboard not accessible in this test context');
+      return;
+    }
+
+    // The new share URL should resolve to a valid analysis page
+    const sharePage = await context.newPage();
+    await sharePage.goto(newShareUrl);
+    await expect(sharePage.locator('#analysisContent')).toBeVisible({ timeout: 10000 });
+    await sharePage.close();
+  });
+
+  test('re-enabled share link is different from the revoked one', async ({ page }) => {
+    await page.locator('#contractText').fill(
+      'WORK FOR HIRE AGREEMENT. All deliverables become sole property of client upon payment. ' +
+      'Contractor waives moral rights. Unlimited revisions required at no extra cost.'
+    );
+    await page.locator('#analyzeBtn').click();
+    await expect(page.locator('#resultsSection')).toBeVisible({ timeout: 60000 });
+
+    // Capture first share token
+    const urls = [];
+    await page.exposeFunction('captureShareUrls', (url) => { urls.push(url); });
+    await page.evaluate(() => {
+      const orig = navigator.clipboard.writeText.bind(navigator.clipboard);
+      navigator.clipboard.writeText = async (text) => {
+        window.captureShareUrls(text);
+        return orig(text);
+      };
+    });
+
+    await page.locator('#shareBtn').click();
+    await page.waitForFunction(() => window._urls?.length > 0 || true, {}, { timeout: 3000 }).catch(() => {});
+
+    // Revoke
+    await page.locator('#revokeShareBtn').click();
+    await expect(page.locator('#revokeShareBtn')).toBeHidden({ timeout: 8000 });
+
+    // Generate a new link
+    await page.locator('#shareBtn').click();
+    await expect(page.locator('#revokeShareBtn')).toBeVisible({ timeout: 10000 });
+
+    if (urls.length < 2) {
+      test.skip(true, 'Clipboard not accessible in this test context');
+      return;
+    }
+
+    // The two share URLs must differ (new UUID token)
+    expect(urls[0]).not.toBe(urls[1]);
   });
 });

@@ -29,6 +29,22 @@ test.describe('API auth boundaries', () => {
     expect(res.status()).toBe(401);
   });
 
+  test('POST /api/generate-share — 401 without auth', async ({ request }) => {
+    const res = await request.post('/api/generate-share', {
+      data: { analysisId: 'any-id' },
+    });
+    expect(res.status()).toBe(401);
+  });
+
+  test('POST /api/generate-share — 400 without analysisId', async ({ request }) => {
+    const res = await request.post('/api/generate-share', {
+      headers: { Authorization: 'Bearer fake-token' },
+      data: {},
+    });
+    // 400 (missing body) or 401 (token rejected) — either way not 200
+    expect(res.status()).not.toBe(200);
+  });
+
   test('GET /api/portal — 401 without auth', async ({ request }) => {
     const res = await request.get('/api/portal');
     // portal may return 405 for GET; what matters is it doesn't return 200

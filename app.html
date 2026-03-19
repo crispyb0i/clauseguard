@@ -520,6 +520,7 @@
   let currentFilename = 'Pasted text';
   let lastResult = null;
   let currentShareToken = null;
+  let currentAnalysisId = null;
 
   // ── Auth gate ─────────────────────────────────────────────────────────────
   async function initAuth() {
@@ -910,6 +911,7 @@ ACME CORP: ___________________     RECIPIENT: ___________________`;
       const result = await res.json();
       lastResult = result;
       currentShareToken = result._shareToken ?? null;
+      currentAnalysisId = result._analysisId ?? null;
       loadUsage();
       if (window.posthog) posthog.capture('document_analyzed', { filename: currentFilename, risk_score: result.riskScore });
       showResults(result);
@@ -997,9 +999,9 @@ ACME CORP: ___________________     RECIPIENT: ___________________`;
     });
 
     document.getElementById('sampleCta').style.display = isSampleAnalysis ? 'flex' : 'none';
-    const showShare = !isSampleAnalysis && !!currentShareToken;
-    document.getElementById('shareBtn').style.display = showShare ? '' : 'none';
-    document.getElementById('revokeShareBtn').style.display = showShare ? '' : 'none';
+    const canShare = !isSampleAnalysis && !!currentAnalysisId;
+    document.getElementById('shareBtn').style.display = canShare ? '' : 'none';
+    document.getElementById('revokeShareBtn').style.display = (canShare && !!currentShareToken) ? '' : 'none';
     document.getElementById('resultsSection').classList.add('visible');
     document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -1140,16 +1142,46 @@ ACME CORP: ___________________     RECIPIENT: ___________________`;
     currentFilename = item.filename;
     lastResult = item.result;
     currentShareToken = item.share_token ?? null;
+    currentAnalysisId = item.id ?? null;
     showView('analyze');
     document.getElementById('uploadSection').style.display = 'none';
     showResults(item.result);
   }
 
-  function shareAnalysis() {
-    if (!currentShareToken) return;
+  async function shareAnalysis() {
+    if (!currentAnalysisId) return;
+    const btn = document.getElementById('shareBtn');
+
+    // If no token (e.g. after revoke), generate a fresh one first
+    if (!currentShareToken) {
+      const orig = btn.textContent;
+      btn.textContent = 'Generating...';
+      btn.disabled = true;
+      try {
+        const r = await fetch('/api/generate-share', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentSession.access_token}`,
+          },
+          body: JSON.stringify({ analysisId: currentAnalysisId }),
+        });
+        if (!r.ok) throw new Error('Failed');
+        const data = await r.json();
+        currentShareToken = data.shareToken;
+        document.getElementById('revokeShareBtn').style.display = '';
+        if (window.posthog) posthog.capture('share_link_generated');
+      } catch {
+        btn.textContent = orig;
+        btn.disabled = false;
+        showError('Failed to generate share link. Please try again.');
+        return;
+      }
+      btn.disabled = false;
+    }
+
     const url = `${location.origin}/share?t=${currentShareToken}`;
     navigator.clipboard.writeText(url).then(() => {
-      const btn = document.getElementById('shareBtn');
       const orig = btn.textContent;
       btn.textContent = '✓ Link copied!';
       setTimeout(() => { btn.textContent = orig; }, 2000);
@@ -1176,7 +1208,8 @@ ACME CORP: ___________________     RECIPIENT: ___________________`;
       });
       if (!r.ok) throw new Error('Failed');
       currentShareToken = null;
-      document.getElementById('shareBtn').style.display = 'none';
+      // Keep share button visible so user can re-enable sharing
+      document.getElementById('shareBtn').style.display = '';
       document.getElementById('revokeShareBtn').style.display = 'none';
       if (window.posthog) posthog.capture('share_link_revoked');
     } catch {
