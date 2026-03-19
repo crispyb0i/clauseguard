@@ -283,6 +283,14 @@
   let sb = null;
 
   async function initSupabase() {
+    // Store referral code from URL before any redirect
+    const refParam = new URLSearchParams(window.location.search).get('ref');
+    if (refParam) {
+      localStorage.setItem('cg_pending_ref', refParam);
+      // Auto-show signup tab when arriving via referral link
+      setTimeout(() => switchTab('signup'), 0);
+    }
+
     const cfg = await fetch('/api/config').then(r => r.json());
     sb = supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
 

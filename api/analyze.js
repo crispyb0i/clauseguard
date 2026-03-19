@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { Sentry } from './_sentry.js';
 import { sendEmail, EMAILS } from './_email.js';
 
@@ -38,7 +39,7 @@ export default async function handler(req, res) {
 
   // ── Load user record ──────────────────────────────────────────────────────
   const dbRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=subscription_tier,analyses_used,analyses_reset_date,last_analysis_at`,
+    `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=subscription_tier,analyses_used,analyses_reset_date,last_analysis_at,bonus_analyses`,
     {
       headers: {
         'apikey': SERVICE_KEY,
@@ -52,6 +53,7 @@ export default async function handler(req, res) {
   // Auto-create record if missing (edge case: trigger didn't fire)
   if (!Array.isArray(userRows) || userRows.length === 0) {
     const today = new Date().toISOString().split('T')[0];
+    const referralCode = randomBytes(4).toString('hex');
     await fetch(`${SUPABASE_URL}/rest/v1/users`, {
       method: 'POST',
       headers: {
@@ -66,9 +68,11 @@ export default async function handler(req, res) {
         subscription_tier: 'free',
         analyses_used: 0,
         analyses_reset_date: today,
+        referral_code: referralCode,
+        bonus_analyses: 0,
       }),
     });
-    userRows = [{ subscription_tier: 'free', analyses_used: 0, analyses_reset_date: today }];
+    userRows = [{ subscription_tier: 'free', analyses_used: 0, analyses_reset_date: today, bonus_analyses: 0 }];
   }
 
   const user = userRows[0];
@@ -96,12 +100,14 @@ export default async function handler(req, res) {
   const LIMITS = { free: 3, starter: 10, pro: 50, team: Infinity };
   const tier = user.subscription_tier || 'free';
   const limit = LIMITS[tier] ?? 3;
+  const bonusAnalyses = user.bonus_analyses ?? 0;
+  const effectiveLimit = limit === Infinity ? Infinity : limit + bonusAnalyses;
 
-  if (limit !== Infinity && analysesUsed >= limit) {
+  if (effectiveLimit !== Infinity && analysesUsed >= effectiveLimit) {
     return res.status(403).json({
-      error: `You've used all ${limit} analyses on your ${tier} plan this month. Upgrade to continue.`,
+      error: `You've used all ${effectiveLimit} analyses on your ${tier} plan this month. Upgrade to continue.`,
       tier,
-      limit,
+      limit: effectiveLimit,
       used: analysesUsed,
     });
   }

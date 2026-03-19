@@ -279,6 +279,31 @@
   textarea.locked { opacity: 0.3; pointer-events: none; cursor: not-allowed; resize: none; }
   .sample-btn.locked { opacity: 0.3; pointer-events: none; cursor: not-allowed; }
 
+  /* REFERRAL CARD */
+  .referral-card {
+    margin-top: 1.5rem; padding: 1.1rem 1.4rem;
+    background: var(--navy-mid); border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .referral-card-title { font-size: 0.82rem; font-weight: 500; color: var(--cream); margin-bottom: 0.3rem; }
+  .referral-card-desc { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.85rem; line-height: 1.5; }
+  .referral-link-row { display: flex; gap: 0.5rem; }
+  .referral-link-input {
+    flex: 1; min-width: 0;
+    background: var(--navy); border: 1px solid var(--border);
+    border-radius: 5px; color: var(--text-muted);
+    font-size: 0.72rem; padding: 0.45rem 0.75rem;
+    font-family: 'DM Mono', monospace; outline: none;
+  }
+  .referral-copy-btn {
+    background: none; border: 1px solid var(--border-bright); color: var(--gold);
+    padding: 0.45rem 1rem; border-radius: 5px;
+    font-size: 0.78rem; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: background 0.15s; white-space: nowrap;
+  }
+  .referral-copy-btn:hover { background: rgba(201,168,76,0.08); }
+  .referral-stat { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.55rem; margin-bottom: 0; }
+
   @media (max-width: 600px) {
     nav { padding: 0.75rem 1rem; }
     .nav-email { display: none; }
@@ -471,6 +496,17 @@
     ⚠ ClauseGuard provides AI-generated analysis for informational purposes only. This is not legal advice. Always consult a qualified attorney before signing legally binding documents.
   </div>
 
+  <!-- REFERRAL CARD -->
+  <div class="referral-card" id="referralCard" style="display:none;">
+    <div class="referral-card-title">🔗 Refer a freelancer friend</div>
+    <p class="referral-card-desc">Share your link — they get 3 extra analyses, you get 3 bonus analyses when they sign up.</p>
+    <div class="referral-link-row">
+      <input type="text" class="referral-link-input" id="referralLinkInput" readonly>
+      <button class="referral-copy-btn" id="referralCopyBtn" onclick="copyReferralLink()">Copy link</button>
+    </div>
+    <p class="referral-stat" id="referralStat" style="display:none;"></p>
+  </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -498,6 +534,9 @@
 
     currentSession = session;
 
+    // Activate any pending referral from signup flow
+    activatePendingReferral(session);
+
     // Show user info in nav
     const email = session.user.email;
     document.getElementById('navEmail').textContent = email.length > 24 ? email.slice(0, 22) + '…' : email;
@@ -521,31 +560,50 @@
 
   const LIMITS = { free: 3, starter: 10, pro: 50, team: Infinity };
 
+  async function activatePendingReferral(session) {
+    const ref = localStorage.getItem('cg_pending_ref');
+    if (!ref) return;
+    localStorage.removeItem('cg_pending_ref');
+    try {
+      await fetch('/api/referral-activate', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ref }),
+      });
+    } catch (e) { /* non-critical */ }
+  }
+
   async function loadUsage() {
     try {
       const { data } = await sb
         .from('users')
-        .select('subscription_tier, analyses_used')
+        .select('subscription_tier, analyses_used, bonus_analyses, referral_code, referral_count')
         .eq('id', currentSession.user.id)
         .single();
       if (!data) return;
-      renderUsage(data.analyses_used ?? 0, data.subscription_tier || 'free');
+      renderUsage(data.analyses_used ?? 0, data.subscription_tier || 'free', data.bonus_analyses ?? 0);
+      renderReferralCard(data.referral_code, data.referral_count ?? 0);
     } catch (e) { /* non-critical */ }
   }
 
-  function renderUsage(used, tier) {
+  function renderUsage(used, tier, bonusAnalyses = 0) {
     const limit = LIMITS[tier] ?? 3;
     if (limit === Infinity) return; // team — unlimited, don't show
 
-    window._usage = { used, limit, tier };
+    const effectiveLimit = limit + bonusAnalyses;
+    window._usage = { used, limit: effectiveLimit, tier };
 
-    const pct = Math.min((used / limit) * 100, 100);
-    const remaining = limit - used;
+    const pct = Math.min((used / effectiveLimit) * 100, 100);
+    const remaining = effectiveLimit - used;
 
-    document.getElementById('usageText').textContent =
-      `${used} of ${limit} analyses used this month`;
+    let usageText = `${used} of ${effectiveLimit} analyses used this month`;
+    if (bonusAnalyses > 0) usageText += ` (${bonusAnalyses} bonus)`;
+    document.getElementById('usageText').textContent = usageText;
     document.getElementById('usageUpgradeLink').style.display =
-      remaining <= Math.ceil(limit * 0.3) ? '' : 'none';
+      remaining <= Math.ceil(effectiveLimit * 0.3) ? '' : 'none';
 
     const fill = document.getElementById('usageFill');
     fill.style.width = pct + '%';
@@ -558,13 +616,34 @@
     document.getElementById('upgradeBtn').style.display = canUpgrade ? '' : 'none';
     document.getElementById('upgradeSep').style.display = canUpgrade ? '' : 'none';
 
-    if (used >= limit) {
+    if (used >= effectiveLimit) {
       document.getElementById('limitBanner').style.display = 'block';
       document.getElementById('dropZone').classList.add('locked');
       document.getElementById('contractText').classList.add('locked');
       document.querySelector('.sample-btn').classList.add('locked');
       document.getElementById('analyzeBtn').disabled = true;
     }
+  }
+
+  function renderReferralCard(referralCode, referralCount) {
+    if (!referralCode) return;
+    const link = `https://clauseguard.io/login?ref=${referralCode}`;
+    document.getElementById('referralLinkInput').value = link;
+    if (referralCount > 0) {
+      const stat = document.getElementById('referralStat');
+      stat.textContent = `${referralCount} friend${referralCount === 1 ? '' : 's'} referred`;
+      stat.style.display = '';
+    }
+    document.getElementById('referralCard').style.display = '';
+  }
+
+  function copyReferralLink() {
+    const input = document.getElementById('referralLinkInput');
+    navigator.clipboard.writeText(input.value).then(() => {
+      const btn = document.getElementById('referralCopyBtn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy link', 2000);
+    });
   }
 
   function toggleDropdown(e) {

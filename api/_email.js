@@ -118,6 +118,28 @@ export const EMAILS = {
 </div>`,
   }),
 
+  referralNotify: (email, referredEmail) => {
+    const [user, domain] = referredEmail.split('@');
+    const masked = user.length <= 2
+      ? user[0] + '***@' + domain
+      : user[0] + '***' + user[user.length - 1] + '@' + domain;
+    return {
+      to: email,
+      subject: 'Someone just joined ClauseGuard through your link',
+      html: `
+<div style="font-family:'Helvetica Neue',sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;background:#0d1b2a;color:#f5f0e8;">
+  <h1 style="font-size:22px;font-weight:700;margin-bottom:8px;color:#f5f0e8;">Your referral worked 🎉</h1>
+  <p style="font-size:15px;color:rgba(245,240,232,0.7);line-height:1.6;margin-bottom:20px;"><strong style="color:#c9a84c;">${masked}</strong> just signed up using your referral link.</p>
+  <div style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:8px;padding:16px 20px;margin-bottom:24px;">
+    <p style="font-size:14px;color:#f5f0e8;margin:0;font-weight:500;">You've earned 3 bonus contract analyses this month</p>
+    <p style="font-size:13px;color:rgba(245,240,232,0.6);margin:6px 0 0;">Your bonus analyses have been added to your account automatically.</p>
+  </div>
+  <a href="https://clauseguard.io/app" style="display:inline-block;background:#c9a84c;color:#0d1b2a;padding:12px 28px;border-radius:5px;text-decoration:none;font-weight:600;font-size:14px;">Analyze a contract →</a>
+  <p style="font-size:12px;color:rgba(245,240,232,0.35);margin-top:32px;">ClauseGuard · Not legal advice · <a href="https://clauseguard.io/tos" style="color:rgba(245,240,232,0.35);">Unsubscribe</a></p>
+</div>`,
+    };
+  },
+
   upgrade: (email, used, limit) => ({
     to: email,
     subject: `You've used ${used} of ${limit} free analyses this month`,
