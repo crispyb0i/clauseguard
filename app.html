@@ -239,6 +239,14 @@
   }
   .error-box.visible { display: block; }
 
+  /* TRUNCATION WARNING */
+  .warn-box {
+    display: none; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 8px; padding: 0.75rem 1.25rem; margin-top: 0.5rem;
+    font-size: 0.8rem; color: var(--gold);
+  }
+  .warn-box.visible { display: block; }
+
   /* DISCLAIMER */
   .disclaimer {
     margin-top: 3rem; padding: 1rem 1.25rem;
@@ -429,8 +437,9 @@
 
     <div class="divider">or paste contract text</div>
 
-    <textarea id="contractText" placeholder="Paste contract text here...&#10;&#10;e.g. THIS AGREEMENT is entered into as of..."></textarea>
+    <textarea id="contractText" placeholder="Paste contract text here...&#10;&#10;e.g. THIS AGREEMENT is entered into as of..." oninput="checkContractLength(this)"></textarea>
 
+    <div class="warn-box" id="truncateWarn"></div>
     <div class="error-box" id="errorBox"></div>
 
     <button class="analyze-btn" id="analyzeBtn" onclick="startAnalysis()">
@@ -837,6 +846,16 @@ ACME CORP: ___________________     RECIPIENT: ___________________`;
       return;
     }
 
+    // Show truncation warning for uploaded files (textarea handles it via oninput)
+    if (currentFile && text.length > CHAR_LIMIT) {
+      const warn = document.getElementById('truncateWarn');
+      if (warn) {
+        const kc = Math.round(text.length / 1000);
+        warn.textContent = `⚠ Your contract is ~${kc}k characters. Only the first ${CHAR_LIMIT.toLocaleString()} characters will be analyzed — the rest will be skipped.`;
+        warn.classList.add('visible');
+      }
+    }
+
     showLoading();
 
     const loadingMessages = [
@@ -1031,6 +1050,20 @@ ACME CORP: ___________________     RECIPIENT: ___________________`;
     fileInput.value = '';
     lastResult = null;
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  const CHAR_LIMIT = 12000;
+
+  function checkContractLength(textarea) {
+    const warn = document.getElementById('truncateWarn');
+    if (!warn) return;
+    if (textarea.value.length > CHAR_LIMIT) {
+      const kc = Math.round(textarea.value.length / 1000);
+      warn.textContent = `⚠ Your contract is ~${kc}k characters. Only the first ${CHAR_LIMIT.toLocaleString()} characters will be analyzed — the rest will be skipped.`;
+      warn.classList.add('visible');
+    } else {
+      warn.classList.remove('visible');
+    }
   }
 
   function showError(msg) {

@@ -1,35 +1,23 @@
 import { Sentry } from './_sentry.js';
+import { requireAuth } from './_auth.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authentication required.' });
-  }
-  const token = authHeader.slice(7);
+  const authUser = await requireAuth(req, res);
+  if (!authUser) return;
+  const userId = authUser.id;
+  const email = authUser.email;
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 
   if (!SUPABASE_URL || !SERVICE_KEY) {
     return res.status(500).json({ error: 'Server configuration error.' });
   }
-
-  // Verify JWT
-  const authRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_ANON_KEY },
-  });
-  if (!authRes.ok) {
-    return res.status(401).json({ error: 'Session expired. Please log in again.' });
-  }
-  const authUser = await authRes.json();
-  const userId = authUser.id;
-  const email = authUser.email;
 
   try {
     // 1. Cancel active Stripe subscription if any

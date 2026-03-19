@@ -1,6 +1,7 @@
-import { randomBytes } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
 import { Sentry } from './_sentry.js';
 import { sendEmail, EMAILS } from './_email.js';
+import { requireAuth } from './_auth.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -8,34 +9,16 @@ export default async function handler(req, res) {
   }
 
   // ── Auth ──────────────────────────────────────────────────────────────────
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authentication required. Please log in.' });
-  }
-  const token = authHeader.slice(7);
+  const authUser = await requireAuth(req, res);
+  if (!authUser) return;
+  const userId = authUser.id;
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!SUPABASE_URL || !SERVICE_KEY) {
     return res.status(500).json({ error: 'Server configuration error.' });
   }
-
-  // Verify JWT with Supabase
-  const authRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'apikey': SUPABASE_ANON_KEY,
-    },
-  });
-
-  if (!authRes.ok) {
-    return res.status(401).json({ error: 'Session expired. Please log in again.' });
-  }
-
-  const authUser = await authRes.json();
-  const userId = authUser.id;
 
   // ── Load user record ──────────────────────────────────────────────────────
   const dbRes = await fetch(
@@ -75,8 +58,40 @@ export default async function handler(req, res) {
     userRows = [{ subscription_tier: 'free', analyses_used: 0, analyses_reset_date: today, bonus_analyses: 0 }];
   }
 
-  const user = userRows[0];
+  let user = userRows[0];
   let analysesUsed = user.analyses_used ?? 0;
+
+  // ── Drain pending_subscriptions (user paid before account existed) ─────────
+  if (authUser.email && user.subscription_tier === 'free') {
+    const pendingRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/pending_subscriptions?email=eq.${encodeURIComponent(authUser.email)}&select=subscription_tier`,
+      { headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` } }
+    );
+    const pending = pendingRes.ok ? await pendingRes.json() : [];
+    if (Array.isArray(pending) && pending.length > 0) {
+      const pendingTier = pending[0].subscription_tier;
+      const today = new Date().toISOString().split('T')[0];
+      await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SERVICE_KEY,
+          'Authorization': `Bearer ${SERVICE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ subscription_tier: pendingTier, analyses_used: 0, analyses_reset_date: today }),
+      });
+      await fetch(
+        `${SUPABASE_URL}/rest/v1/pending_subscriptions?email=eq.${encodeURIComponent(authUser.email)}`,
+        {
+          method: 'DELETE',
+          headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` },
+        }
+      );
+      console.log(`Drained pending_subscriptions for ${authUser.email}: applied tier=${pendingTier}`);
+      user = { ...user, subscription_tier: pendingTier, analyses_used: 0 };
+      analysesUsed = 0;
+    }
+  }
 
   // ── Monthly reset ─────────────────────────────────────────────────────────
   const resetDate = new Date(user.analyses_reset_date);
@@ -223,6 +238,7 @@ positives should list 2-4 things that are standard or favorable.`;
         risk_label: result.riskLabel,
         summary: result.summary,
         result,
+        share_token: randomUUID(),
       }),
     });
 
